@@ -1,8 +1,9 @@
 from distutils.command.build_py import build_py
 from distutils.core import setup
 import os
-import shutil
-from urlo.domain import tld_file_path, get_domain
+
+from tldextract import tldextract
+
 
 VERSION = '0.1'
 
@@ -17,13 +18,11 @@ class TldFileGenerator(build_py):
     def run(self):
         self.build_packages()
 
-        if not os.path.exists(tld_file_path):
-            print 'Generating: Tld File: '
-            get_domain('www.google.com')
+        build_file_path = os.path.join(self.build_lib, name, 'hosts.txt')
 
-        build_file_path = os.path.join(self.build_lib, name, os.path.basename(tld_file_path))
         if not os.path.exists(build_file_path):
-            shutil.move(tld_file_path, build_file_path)
+            tldextract.TLDExtract(cache_file=build_file_path)
+            print 'Generating: Tld File: '
 
 
 setup(name=name,

@@ -3,8 +3,7 @@ import os
 from tldextract import tldextract
 
 
-tld_file_path = os.path.join(os.path.dirname(__file__), 'hosts.txt')
-_host_extract = tldextract.TLDExtract(cache_file=tld_file_path)
+_host_extract = tldextract.TLDExtract(cache_file=os.path.join(os.path.dirname(__file__), 'hosts.txt'))
 
 
 def get_domain(url):
