@@ -1,0 +1,2 @@
+tldextract
+git+git://github.com/dipstef/unicoder.git
