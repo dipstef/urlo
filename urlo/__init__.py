@@ -3,7 +3,7 @@ import urllib2
 from urlparse import urlparse, parse_qs, urljoin
 from funlib.lazy import lazy_property, lazy
 from unicoder import force_unicode, byte_string
-from urlo.domain import get_domain, get_domain_suffix
+from urlo.domain import get_domain, get_domain_suffix, parse_domain
 from urlo.query import Query
 
 
@@ -16,13 +16,21 @@ def _url(value):
         def _parsed(self):
             return urlparse(self.unquoted(), allow_fragments=False)
 
+        @lazy_property
+        def _host_parsed(self):
+            return parse_domain(self)
+
         @property
         def host(self):
-            return get_domain(self)
+            return self._host_parsed.domain
 
         @property
         def host_suffix(self):
-            return get_domain_suffix(self)
+            return self._host_parsed.suffix
+
+        @property
+        def sub_host(self):
+            return self._host_parsed.sub_domain
 
         @property
         def protocol(self):

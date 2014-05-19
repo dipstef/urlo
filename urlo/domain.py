@@ -23,15 +23,37 @@ def get_domain_suffix(url):
         return ext.suffix
 
 
-def get_subdomain(url):
+def get_sub_domain(url):
     ext = _host_extract(url.strip())
-    subdomain = ext.subdomain.lower() if ext.subdomain else ''
+    return _sub_domain(ext)
 
+
+def _sub_domain(ext):
+    sub_domain = _sub_domain_name(ext)
     domain = _domain(ext)
+    return '.'.join((sub_domain, domain)) if sub_domain else domain
 
-    return '.'.join((subdomain, domain)) if subdomain else domain
 
-
-def get_subdomain_name(url):
+def get_sub_domain_name(url):
     ext = _host_extract(url.strip())
-    return ext.subdomain.lower() if ext.subdomain else None
+    return _sub_domain_name(ext)
+
+
+def _sub_domain_name(ext):
+    return ext.subdomain.lower() if ext.subdomain else ''
+
+
+def parse_domain(url):
+    ext = _host_extract(url.strip())
+    return DomainInfo(_sub_domain_name(ext), _domain(ext), ext.suffix)
+
+
+class DomainInfo(object):
+    def __init__(self, sub_domain_name, domain, suffix):
+        self.sub_domain_name = sub_domain_name
+        self.domain = domain
+        self.suffix = suffix
+
+    @property
+    def sub_domain(self):
+        return '.'.join((self.sub_domain_name, self.domain)) if self.sub_domain_name else self.domain
