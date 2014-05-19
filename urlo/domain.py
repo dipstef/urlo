@@ -8,6 +8,10 @@ _host_extract = tldextract.TLDExtract(cache_file=os.path.join(os.path.dirname(__
 
 def get_domain(url):
     ext = _host_extract(url.strip())
+    return _domain(ext)
+
+
+def _domain(ext):
     if ext.domain and ext.suffix:
         domain = '.'.join(ext[1:])
         return domain.lower()
@@ -19,6 +23,15 @@ def get_domain_suffix(url):
         return ext.suffix
 
 
-def is_sub_host(url):
+def get_subdomain(url):
     ext = _host_extract(url.strip())
-    return bool(ext and ext.subdomain and not ext.subdomain.startswith('www'))
+    subdomain = ext.subdomain.lower() if ext.subdomain else ''
+
+    domain = _domain(ext)
+
+    return '.'.join((subdomain, domain)) if subdomain else domain
+
+
+def get_subdomain_name(url):
+    ext = _host_extract(url.strip())
+    return ext.subdomain.lower() if ext.subdomain else None

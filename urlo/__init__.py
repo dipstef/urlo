@@ -50,11 +50,11 @@ def _url(value):
 
         @lazy
         def quoted(self):
-            return Url(quote(self))
+            return _url(quote(self))
 
         @lazy
         def unquoted(self):
-            return Url(unquoted(self))
+            return _url(unquoted(self))
 
     return Url(value.strip())
 
