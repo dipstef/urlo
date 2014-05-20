@@ -7,66 +7,78 @@ from urlo.domain import get_domain, get_domain_suffix, parse_domain
 from urlo.query import Query
 
 
-def _url(value):
-    assert isinstance(value, basestring)
+class StringOrUnicode(object):
 
-    class Url(type(value)):
+    def __new__(cls, value, *more):
+        assert isinstance(value, basestring)
 
-        @lazy_property
-        def _parsed(self):
-            return urlparse(self.unquoted(), allow_fragments=False)
+        bases = cls.__bases__
+        if not issubclass(cls, basestring):
+            bases = (value.__class__, cls) + bases
+        else:
+            bases = (value.__class__, ) + bases[1:]
 
-        @lazy_property
-        def _host_parsed(self):
-            return parse_domain(self)
+        cls = type(cls.__name__, bases, dict(cls.__dict__))
 
-        @property
-        def host(self):
-            return self._host_parsed.domain
+        return value.__class__.__new__(cls, value, *more)
 
-        @property
-        def host_suffix(self):
-            return self._host_parsed.suffix
 
-        @property
-        def sub_host(self):
-            return self._host_parsed.sub_domain
+class Url(StringOrUnicode):
 
-        @property
-        def protocol(self):
-            return self._parsed.scheme
+    @lazy_property
+    def _parsed(self):
+        return urlparse(self.unquoted(), allow_fragments=False)
 
-        @property
-        def query_string(self):
-            return self._parsed.query
+    @lazy_property
+    def _host_parsed(self):
+        return parse_domain(self)
 
-        @property
-        def query(self):
-            query = parse_qs(self._parsed.query, keep_blank_values=True)
-            return Query(query)
+    @property
+    def host(self):
+        return self._host_parsed.domain
 
-        @property
-        def path(self):
-            return self._parsed.path
+    @property
+    def host_suffix(self):
+        return self._host_parsed.suffix
 
-        @property
-        def port(self):
-            return self._parsed.port or 80
+    @property
+    def sub_host(self):
+        return self._host_parsed.sub_domain
 
-        def is_valid(self):
-            return bool(self.protocol and self.host)
+    @property
+    def protocol(self):
+        return self._parsed.scheme
 
-        @lazy
-        def quoted(self):
-            return _url(quote(self))
+    @property
+    def query_string(self):
+        return self._parsed.query
 
-        @lazy
-        def unquoted(self):
-            return _url(unquoted(self))
+    @property
+    def query(self):
+        query = parse_qs(self._parsed.query, keep_blank_values=True)
+        return Query(query)
 
-    return Url(value.strip())
+    @property
+    def path(self):
+        return self._parsed.path
 
-Url = _url
+    @property
+    def port(self):
+        return self._parsed.port or 80
+
+    def is_valid(self):
+        return bool(self.protocol and self.host)
+
+    def quoted(self):
+        quoted = quote(self)
+        return self.__class__(quoted)
+
+    @lazy
+    def unquoted(self):
+        return self.__class__(unquoted(self))
+
+    def __new__(cls, url, *more):
+        return super(Url, cls).__new__(cls, url.strip(), *more)
 
 
 def unquoted(url, encoding='utf-8'):
