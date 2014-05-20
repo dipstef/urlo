@@ -62,6 +62,9 @@ class Query(object):
     def __eq__(self, other):
         return self._params == other
 
+    def __len__(self):
+        return len(self._params)
+
     def update(self, params):
         self._params.update(Query(params))
 

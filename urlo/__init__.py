@@ -69,6 +69,7 @@ class Url(StringOrUnicode):
     def is_valid(self):
         return bool(self.protocol and self.host)
 
+    @lazy
     def quoted(self):
         quoted = quote(self)
         return self.__class__(quoted)
