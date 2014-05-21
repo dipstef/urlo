@@ -29,6 +29,7 @@ def _ip_url_test():
 def _sub_domain_test():
     google_co_uk = Url('http://www.google.co.uk')
 
+    assert google_co_uk.port == 80
     assert google_co_uk.host == 'www.google.co.uk'
     assert google_co_uk.domain == 'google.co.uk'
     assert google_co_uk.domain_suffix == 'co.uk'

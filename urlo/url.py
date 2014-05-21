@@ -49,9 +49,14 @@ class UrlParse(UrlParsed):
     def __new__(cls, url):
         parsed = urlparse(unquoted(url), allow_fragments=False)
 
-        host = re.sub(':%s' % str(parsed.port), '', parsed.netloc)
+        port = parsed.port
+        if port:
+            host = re.sub(':%s' % str(port), '', parsed.netloc)
+        else:
+            host = parsed.netloc
+            port = 80
 
-        return super(UrlParsed, cls).__new__(cls, parsed.scheme, host, parsed.port, parsed.path, parsed.query)
+        return super(UrlParsed, cls).__new__(cls, parsed.scheme, host, port, parsed.path, parsed.query)
 
 
 def unquote(url):
