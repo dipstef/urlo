@@ -1,7 +1,6 @@
 import re
 
-from . import unquoted as base_unquoted
-from . import join_url as base_join
+from urlo.url import unquoted as base_unquoted, join_url
 
 
 def join_url(url, path):

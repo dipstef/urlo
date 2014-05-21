@@ -1,10 +1,11 @@
-import urllib
-import urllib2
-from urlparse import urlparse, parse_qs, urljoin
-from funlib.lazy import lazy_property, lazy
-from unicoder import force_unicode, byte_string
-from urlo.domain import get_domain, get_domain_suffix, parse_domain
-from urlo.query import Query
+from funlib.lazy import lazy
+
+from .domain import get_domain, get_domain_suffix, parse_domain
+
+from .url import UrlParse, quote, unquote
+
+from .query import Query
+from urlo.url import unquoted
 
 
 class StringOrUnicode(object):
@@ -25,49 +26,18 @@ class StringOrUnicode(object):
 
 class Url(StringOrUnicode):
 
-    @lazy_property
-    def _parsed(self):
-        return urlparse(self.unquoted(), allow_fragments=False)
+    def __init__(self, value, *args):
+        super(Url, self).__init__(value, *args)
+        self._parsed = None
 
-    @lazy_property
-    def _host_parsed(self):
-        return parse_domain(self)
-
-    @property
-    def host(self):
-        return self._host_parsed.domain
+    def __new__(cls, value, *more):
+        return super(Url, cls).__new__(cls, value.strip(), *more)
 
     @property
-    def host_suffix(self):
-        return self._host_parsed.suffix
-
-    @property
-    def sub_host(self):
-        return self._host_parsed.sub_domain
-
-    @property
-    def protocol(self):
-        return self._parsed.scheme
-
-    @property
-    def query_string(self):
-        return self._parsed.query
-
-    @property
-    def query(self):
-        query = parse_qs(self._parsed.query, keep_blank_values=True)
-        return Query(query)
-
-    @property
-    def path(self):
-        return self._parsed.path
-
-    @property
-    def port(self):
-        return self._parsed.port or 80
-
-    def is_valid(self):
-        return bool(self.protocol and self.host)
+    def parsed(self):
+        if not self._parsed:
+            self._parsed = UrlParse(self)
+        return self._parsed
 
     @lazy
     def quoted(self):
@@ -78,35 +48,5 @@ class Url(StringOrUnicode):
     def unquoted(self):
         return self.__class__(unquoted(self))
 
-    def __new__(cls, url, *more):
-        return super(Url, cls).__new__(cls, url.strip(), *more)
-
-
-def unquoted(url, encoding='utf-8'):
-    url = force_unicode(unquote(quote(url)), encoding=encoding)
-    return url
-
-
-def unquote(url):
-    unquoted_url = urllib2.unquote(url.strip())
-    while unquoted_url != url:
-        url = unquoted_url
-        unquoted_url = urllib2.unquote(url)
-
-    return unquoted_url
-
-
-# RFC 3986 (Generic Syntax)
-_reserved = ';/?:@&=+$|,#'
-# RFC 3986 sec 2.3
-_unreserved_marks = "-_.!~*'()"
-_safe_chars = urllib.always_safe + '%' + _reserved + _unreserved_marks
-
-
-def quote(url, encoding='utf-8'):
-    s = byte_string(url, encoding)
-    return urllib.quote(s,  _safe_chars)
-
-
-def join_url(url, path):
-    return urljoin(url, unquoted(path))
+    def __getattr__(self, item):
+        return getattr(self.parsed, item)

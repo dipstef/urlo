@@ -1,5 +1,6 @@
 from urlo import Url, quote
-from urlo.parser import is_base_url, UrlBuilder, UrlModifier
+from urlo.parser import UrlBuilder, UrlModifier
+from urlo.url import is_base_url
 
 
 def _url_parsing_test():
@@ -9,16 +10,34 @@ def _url_parsing_test():
 
     assert url.port == 81
     assert url.host == 'test.com'
-    assert url.host_suffix == 'com'
+    assert url.domain == 'test.com'
+    assert url.domain_suffix == 'com'
     assert url.path == '/test'
 
 
-def _sub_domain_test():
-    assert Url('www.google.co.uk').host == 'google.co.uk'
-    assert Url('www.google.co.uk').host_suffix == 'co.uk'
+def _ip_url_test():
+    url = Url('http://192.168.1.1:81/test')
 
-    assert Url('sub.domain.google.com').host == 'google.com'
-    assert Url('sub.domain.google.co.uk').host == 'google.co.uk'
+    assert url.port == 81
+    assert not url.domain
+    assert not url.sub_domain
+    assert not url.domain_suffix
+
+    assert url.host == '192.168.1.1'
+
+
+def _sub_domain_test():
+    google_co_uk = Url('http://www.google.co.uk')
+
+    assert google_co_uk.host == 'www.google.co.uk'
+    assert google_co_uk.domain == 'google.co.uk'
+    assert google_co_uk.domain_suffix == 'co.uk'
+
+    google_sub_domain = Url('http://sub.domain.google.com')
+
+    assert google_sub_domain.domain == 'google.com'
+    assert google_sub_domain.host == 'sub.domain.google.com'
+    assert google_sub_domain.sub_domain == 'sub.domain.google.com'
 
 
 def _base_url_test():
@@ -66,8 +85,11 @@ def _url_builder_test():
 
 
 def _url_modification_test():
-    url = 'http://test.com/test?foo=123&bar=456'
-    assert 'http://test.com/test?bar=456' == UrlModifier(url).remove_parameters('foo')
+    url = UrlModifier('http://test.com/test?foo=123&bar=456')
+    assert 'http://test.com/test?bar=456' == url.remove_parameters('foo')
+
+    url = UrlModifier('http://192.168.1.1:81/test?foo=123')
+    assert 'http://192.168.1.1:81/test?foo=123&bar=456' == url.add_parameters(bar=456)
 
 
 def _url_quoting_test():
@@ -83,6 +105,7 @@ def _url_quoting_test():
 
 def main():
     _url_parsing_test()
+    _ip_url_test()
     _sub_domain_test()
     _base_url_test()
 

@@ -1,12 +1,13 @@
-from urlparse import urlparse, urlunparse, urljoin
-
-from urlo import Url, unquoted
-from urlo.query import Query
+from urlparse import urljoin, urlparse, urlunparse
+from . import Url
+from .query import Query
+from .url import UrlParsed
 
 
 class UrlBuilder(object):
 
-    def __init__(self, host, path='', port=80, params=None, protocol='http'):
+    def __init__(self, host, path='/', port=80, params=None, protocol='http'):
+        super(UrlBuilder, self).__init__()
         self.host = host
         self.path = path
         self.port = port
@@ -15,17 +16,11 @@ class UrlBuilder(object):
 
     @property
     def url(self):
-        url = '{protocol}://{host}{port}'.format(protocol=self.protocol, host=self.host,
-                                                 port=':%d' % self.port if self.port != 80 else '')
-
-        url = urljoin(url, self.path)
-        url += str(self.query)
-
-        return Url(url)
+        return self.parsed.url
 
     @property
-    def _parsed(self):
-        return urlparse(unquoted(self.url), allow_fragments=False)
+    def parsed(self):
+        return UrlRebuild(self.protocol, self.host, self.port, self.path, str(self.query))
 
     def __getitem__(self, item):
         return self.query.get(item)
@@ -41,6 +36,17 @@ class UrlBuilder(object):
 
     def add_parameters(self, **params):
         self.query.update(params)
+
+
+class UrlRebuild(UrlParsed):
+
+    @property
+    def url(self):
+        url = '{protocol}://{server}'.format(protocol=self.protocol, server=self.server)
+
+        url = urljoin(url, self.path + self.query_string)
+
+        return Url(url)
 
 
 class UrlModifier(object):
@@ -59,11 +65,6 @@ class UrlModifier(object):
         self.url = Url(self._builder.url)
 
 
-def is_base_url(url):
-    url = Url(url)
-    return (not url.path or url.path == '/') and not bool(url.query_string)
-
-
 def exclude_parameters(url, *excluded):
     url_modifier = UrlModifier(url)
     url_modifier.remove_parameters(*excluded)
@@ -75,12 +76,6 @@ def remove_query(url):
     parsed = urlparse(url)
 
     return urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, '', parsed.fragment))
-
-
-def get_parameter_value(url, parameter):
-    url = Url(url)
-
-    return url[parameter]
 
 
 def build_url(host, path='', port=80, params=None, protocol='http'):
