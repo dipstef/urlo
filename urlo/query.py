@@ -1,10 +1,6 @@
 from collections import OrderedDict
 
 
-def _param_value(value):
-    return value[0] if isinstance(value, list) else value
-
-
 class Query(object):
 
     def __init__(self, query):
@@ -70,3 +66,7 @@ class Query(object):
 
     def iteritems(self):
         return self._params.iteritems()
+
+
+def _param_value(value):
+    return value[0] if isinstance(value, list) else value
