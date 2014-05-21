@@ -40,7 +40,7 @@ def get_sub_domain_name(url):
 
 
 def _sub_domain_name(ext):
-    return ext.subdomain.lower() if ext.subdomain else ''
+    return ext.subdomain.lower() if ext.subdomain else None
 
 
 def parse_domain(url):
