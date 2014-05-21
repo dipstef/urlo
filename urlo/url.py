@@ -11,17 +11,6 @@ from .domain import parse_domain
 from .query import Query
 
 
-def is_base_url(url):
-    url = UrlParse(url)
-    return (not url.path or url.path == '/') and not bool(url.query_string)
-
-
-def get_parameter_value(url, parameter):
-    url = UrlParse(url)
-
-    return url.query[parameter]
-
-
 class UrlParsed(namedtuple('UrlParsed', ['protocol', 'host', 'port', 'path', 'query_string'])):
 
     def __new__(cls, protocol, host, port, path, query_string=''):
@@ -93,3 +82,14 @@ def unquoted(url, encoding='utf-8'):
 
 def join_url(url, path):
     return urljoin(url, unquoted(path))
+
+
+def is_base_url(url):
+    url = UrlParse(url)
+    return (not url.path or url.path == '/') and not bool(url.query_string)
+
+
+def get_parameter_value(url, parameter):
+    url = UrlParse(url)
+
+    return url.query[parameter]
