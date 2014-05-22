@@ -1,5 +1,5 @@
 from urlparse import urljoin, urlparse, urlunparse
-from . import Url
+from . import Url, UrlParse
 from .query import Query
 from .url import UrlParsed
 
@@ -49,20 +49,11 @@ class UrlRebuild(UrlParsed):
         return Url(url)
 
 
-class UrlModifier(object):
+class UrlModifier(UrlBuilder):
 
     def __init__(self, url):
-        url = Url(url)
-        self._builder = UrlBuilder(url.host, url.path, url.port, url.query, url.protocol)
-        self.url = url
-
-    def remove_parameters(self, *params):
-        self._builder.remove_parameters(*params)
-        self.url = Url(self._builder.url)
-
-    def add_parameters(self, **params):
-        self._builder.add_parameters(**params)
-        self.url = Url(self._builder.url)
+        url = UrlParse(url)
+        super(UrlModifier, self).__init__(url.host, url.path, url.port, url.query, url.protocol)
 
 
 def exclude_parameters(url, *excluded):
