@@ -1,5 +1,7 @@
 from collections import OrderedDict
 
+from unicoder import byte_string, decoded
+
 
 class Query(object):
 
@@ -30,10 +32,10 @@ class Query(object):
         values = self._params.get(parameter, [])
         return values if isinstance(values, list) else [values]
 
-    def iterate_parameters_values(self):
-        return ((param, value) for param, values in self.iterate_parameter_value_list() for value in values)
+    def iterate_query_values(self):
+        return ((param, value) for param, values in self.iterate_query_value_list() for value in values)
 
-    def iterate_parameter_value_list(self):
+    def iterate_query_value_list(self):
         return ((param, self.get_values(param)) for param in self._params.iterkeys())
 
     def remove(self, *parameters):
@@ -43,8 +45,12 @@ class Query(object):
                 del self._params[parameter]
 
     def __str__(self):
-        query = '&'.join('%s=%s' % (param, str(value or '')) for param, value in self.iterate_parameters_values())
+        values = ('%s=%s' % (param, byte_string(value or '')) for param, value in self.iterate_query_values())
+        query = '&'.join(values)
         return '?' + query if query else ''
+
+    def __unicode__(self):
+        return decoded(str(self))
 
     def keys(self):
         return self._params.keys()

@@ -1,4 +1,7 @@
 from urlparse import urljoin, urlparse, urlunparse
+
+from unicoder import to_unicode
+
 from . import Url, UrlParse
 from .query import Query
 from .url import UrlParsed
@@ -8,8 +11,8 @@ class UrlBuilder(object):
 
     def __init__(self, host, path='/', port=80, params=None, protocol='http'):
         super(UrlBuilder, self).__init__()
-        self.host = host
-        self.path = path
+        self.host = to_unicode(host)
+        self.path = to_unicode(path)
         self.port = port
         self.query = Query(params or {})
         self.protocol = protocol
@@ -20,7 +23,7 @@ class UrlBuilder(object):
 
     @property
     def parsed(self):
-        return UrlRebuild(self.protocol, self.host, self.port, self.path, str(self.query))
+        return UrlRebuild(self.protocol, self.host, self.port, self.path, to_unicode(self.query))
 
     def __getitem__(self, item):
         return self.query.get(item)
