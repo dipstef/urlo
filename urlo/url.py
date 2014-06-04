@@ -14,7 +14,7 @@ from .query import Query
 class UrlParsed(namedtuple('UrlParsed', ['protocol', 'host', 'port', 'path', 'query_string'])):
 
     def __new__(cls, protocol, host, port, path, query_string=''):
-        return super(UrlParsed, cls).__new__(cls, protocol, host, port, path, query_string)
+        return super(UrlParsed, cls).__new__(cls, protocol, host, int(port), path, query_string)
 
     @lazy_property
     def _host_parsed(self):
