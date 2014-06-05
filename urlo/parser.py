@@ -1,8 +1,8 @@
+from functools import wraps
+import os
 from urlparse import urljoin, urlparse, urlunparse
 
-from unicoder import to_unicode
-
-from . import Url, UrlParse
+from . import Url
 from .query import Query
 from .url import UrlParsed
 
@@ -11,34 +11,35 @@ class UrlBuilder(object):
 
     def __init__(self, host, path='/', port=80, params=None, protocol='http'):
         super(UrlBuilder, self).__init__()
-        self.host = to_unicode(host)
-        self.path = to_unicode(path)
+        self.host = host
+        self.path = path
         self.port = port
         self.query = Query(params or {})
         self.protocol = protocol
 
     @property
     def url(self):
-        return self.parsed.url
+        parsed = UrlRebuild(self.protocol, self.host, self.port, self.path, unicode(self.query))
+        return parsed.url
 
-    @property
-    def parsed(self):
-        return UrlRebuild(self.protocol, self.host, self.port, self.path, to_unicode(self.query))
+    def join_path(self, *entries):
+        if entries:
+            self.path = os.path.join(self.path, *entries)
+
+    def add_parameters(self, **params):
+        self.query.update(params)
+
+    def remove_parameters(self, *params):
+        self.query.remove(*params)
 
     def __getitem__(self, item):
-        return self.query.get(item)
+        return self.query[item]
 
     def __setitem__(self, key, value):
         self.query[key] = value
 
     def __delitem__(self, key):
         self.query.remove([key])
-
-    def remove_parameters(self, *params):
-        self.query.remove(*params)
-
-    def add_parameters(self, **params):
-        self.query.update(params)
 
 
 class UrlRebuild(UrlParsed):
@@ -52,11 +53,35 @@ class UrlRebuild(UrlParsed):
         return Url(url)
 
 
-class UrlModifier(UrlBuilder):
+class UrlModifier(object):
 
-    def __init__(self, url):
-        url = UrlParse(url)
-        super(UrlModifier, self).__init__(url.host, url.path, url.port, url.query, url.protocol)
+    def __init__(self, value):
+        self.url = Url(value)
+        self._builder = UrlBuilder(self.host, self.path, self.port, self.query, self.protocol)
+
+    def __getattr__(self, item):
+        try:
+            return getattr(self.url, item)
+        except AttributeError:
+            builder_fun = getattr(self._builder, item)
+
+            @wraps(builder_fun)
+            def modify(*args, **kwargs):
+                builder_fun(*args, **kwargs)
+                self.url = self._builder.url
+                return self
+
+            return modify
+
+    @property
+    def __class__(self):
+        return self.url.__class__
+
+    def __eq__(self, other):
+        return self.url == other
+
+    def __repr__(self):
+        return repr(self.url)
 
 
 def exclude_parameters(url, *excluded):

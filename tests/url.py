@@ -87,10 +87,15 @@ def _url_builder_test():
 
 def _url_modification_test():
     url = UrlModifier('http://test.com/test?foo=123&bar=456')
-    assert 'http://test.com/test?bar=456' == url.remove_parameters('foo')
+    modified = url.remove_parameters('foo')
+    assert 'http://test.com/test?bar=456' == modified
+    assert isinstance(modified, unicode)
 
     url = UrlModifier('http://192.168.1.1:81/test?foo=123')
-    assert 'http://192.168.1.1:81/test?foo=123&bar=456' == url.add_parameters(bar=456)
+    modified = url.add_parameters(bar=456)
+    assert 'http://192.168.1.1:81/test?foo=123&bar=456' == modified
+
+    assert modified.url == modified
 
 
 def _url_quoting_test():
@@ -113,6 +118,7 @@ def main():
     _url_parameters_test()
 
     _url_builder_test()
+    _url_modification_test()
 
     _url_quoting_test()
 

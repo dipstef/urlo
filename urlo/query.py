@@ -5,7 +5,8 @@ from unicoder import byte_string, decoded
 
 class Query(object):
 
-    def __init__(self, query):
+    def __init__(self, query=None):
+        query = query or {}
         params = ((param, _param_value(query[param])) for param in query)
         self._params = OrderedDict(params)
 
@@ -22,11 +23,14 @@ class Query(object):
 
         self._params[parameter] = value
 
-    def get(self, parameter):
+    def __delitem__(self, parameter):
+        del self._params[parameter]
+
+    def get(self, parameter, default=None):
         try:
             return self[parameter]
         except KeyError:
-            return None
+            return default
 
     def get_values(self, parameter):
         values = self._params.get(parameter, [])
