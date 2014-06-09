@@ -1,5 +1,6 @@
 from distutils.command.build_py import build_py
 from distutils.core import setup
+import logging
 
 from urlo.domain import get_domain
 
@@ -12,9 +13,19 @@ library to correctly parse url domain information."""
 name = 'urlo'
 
 
+def _configure_tld_logger():
+    logger = logging.getLogger('tldextract')
+
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.ERROR)
+    ch.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    logger.addHandler(ch)
+
+
 class TldFileGenerator(build_py):
 
     def run(self):
+        _configure_tld_logger()
         get_domain('http://google.com')
         build_py.run(self)
 
