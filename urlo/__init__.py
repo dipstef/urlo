@@ -1,4 +1,4 @@
-from funlib.lazy import lazy
+from funlib.cached import cached, cached_property
 
 from .domain import get_domain, get_domain_suffix, parse_domain
 
@@ -28,23 +28,20 @@ class Url(StringOrUnicode):
 
     def __init__(self, value, *args):
         super(Url, self).__init__(value, *args)
-        self._parsed = None
 
     def __new__(cls, value, *more):
         return super(Url, cls).__new__(cls, value.strip(), *more)
 
-    @property
+    @cached_property
     def parsed(self):
-        if not self._parsed:
-            self._parsed = UrlParse(self)
-        return self._parsed
+        return UrlParse(self)
 
-    @lazy
+    @cached
     def quoted(self):
         quoted = quote(self)
         return self.__class__(quoted)
 
-    @lazy
+    @cached
     def unquoted(self):
         return self.__class__(unquoted(self))
 

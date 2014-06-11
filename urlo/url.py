@@ -4,7 +4,7 @@ import urllib
 import urllib2
 from urlparse import parse_qs, urlparse, urljoin
 
-from funlib.lazy import lazy_property
+from funlib.cached import cached_property
 from unicoder import force_unicode, byte_string
 
 from .domain import parse_domain
@@ -16,7 +16,7 @@ class UrlParsed(namedtuple('UrlParsed', ['protocol', 'host', 'port', 'path', 'qu
     def __new__(cls, protocol, host, port, path, query_string=''):
         return super(UrlParsed, cls).__new__(cls, protocol, host, int(port), path, query_string)
 
-    @lazy_property
+    @cached_property
     def _host_parsed(self):
         return parse_domain(self.host)
 
@@ -39,7 +39,7 @@ class UrlParsed(namedtuple('UrlParsed', ['protocol', 'host', 'port', 'path', 'qu
     def is_valid(self):
         return bool(self.protocol and self.host)
 
-    @lazy_property
+    @cached_property
     def server(self):
         return '{host}{port}'.format(host=self.host, port=':%d' % self.port if self.port != 80 else '')
 
