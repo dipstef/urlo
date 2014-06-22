@@ -3,7 +3,7 @@ from collections import OrderedDict
 from unicoder import byte_string, decoded
 
 
-class Query(object):
+class QueryParams(object):
 
     def __init__(self, query=None):
         query = query or {}
@@ -14,17 +14,6 @@ class Query(object):
         value = self._params[parameter]
 
         return _param_value(value)
-
-    def __setitem__(self, parameter, value):
-        value = str(value)
-        existing = self._params.get(parameter)
-        if existing:
-            value = [existing, value] if not isinstance(existing, list) else existing + [value]
-
-        self._params[parameter] = value
-
-    def __delitem__(self, parameter):
-        del self._params[parameter]
 
     def get(self, parameter, default=None):
         try:
@@ -42,12 +31,6 @@ class Query(object):
     def iterate_query_value_list(self):
         return ((param, self.get_values(param)) for param in self._params.iterkeys())
 
-    def remove(self, *parameters):
-        parameters = parameters or self._params.iterkeys()
-        for parameter in parameters:
-            if parameter in self:
-                del self._params[parameter]
-
     def __str__(self):
         values = ('%s=%s' % (param, byte_string(value or '')) for param, value in self.iterate_query_values())
         query = '&'.join(values)
@@ -58,6 +41,9 @@ class Query(object):
 
     def keys(self):
         return self._params.keys()
+
+    def iteritems(self):
+        return self._params.iteritems()
 
     def __iter__(self):
         return iter(self._params)
@@ -71,11 +57,31 @@ class Query(object):
     def __len__(self):
         return len(self._params)
 
+
+class Query(QueryParams):
+
+    def __init__(self, query=None):
+        super(Query, self).__init__(query)
+
+    def __setitem__(self, parameter, value):
+        value = str(value)
+        existing = self._params.get(parameter)
+        if existing:
+            value = [existing, value] if not isinstance(existing, list) else existing + [value]
+
+        self._params[parameter] = value
+
+    def __delitem__(self, parameter):
+        del self._params[parameter]
+
+    def remove(self, *parameters):
+        parameters = parameters or self._params.iterkeys()
+        for parameter in parameters:
+            if parameter in self:
+                del self._params[parameter]
+
     def update(self, params):
         self._params.update(Query(params))
-
-    def iteritems(self):
-        return self._params.iteritems()
 
 
 def _param_value(value):
