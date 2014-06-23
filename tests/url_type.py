@@ -1,10 +1,13 @@
 from urlo import Url
+from urlo.parser import UrlModifier
 
 
 class UrlSubClass(Url):
     @property
     def foo(self):
         return 'foo'
+
+foo = UrlSubClass
 
 
 def main():
@@ -22,7 +25,7 @@ def main():
 
     quoted = url.quoted()
     assert isinstance(quoted, Url)
-    assert isinstance(quoted, str)
+    assert isinstance(quoted, unicode)
 
     url = UrlSubClass(u'http://test.com')
 
@@ -30,6 +33,30 @@ def main():
     assert 'foo' == url.foo
     assert isinstance(url, Url)
     assert isinstance(url, unicode)
+
+    url = Url('http://test.com')
+    url = url.__class__('http://test.com')
+    assert url.host == 'test.com'
+
+    modifier = UrlModifier('http://test.com')
+
+    modifier.join_path('foo')
+    assert modifier.host == 'test.com'
+
+    modifier.add_parameters(foo=1)
+    assert modifier.host == 'test.com'
+
+    modifier.remove_parameters('foo')
+    assert modifier.host == 'test.com'
+
+    url = UrlModifier('http://test.com/test')
+    url.remove_parameters('foo')
+
+    url.join_path(u'foo')
+
+    assert url == u'http://test.com/test/foo'
+    assert isinstance(url, unicode)
+
 
 if __name__ == '__main__':
     main()

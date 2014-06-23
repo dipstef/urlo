@@ -1,5 +1,4 @@
 from collections import OrderedDict
-
 from unicoder import byte_string, decoded
 
 

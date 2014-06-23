@@ -4,9 +4,9 @@ import urllib
 import urllib2
 from urlparse import parse_qs, urlparse, urljoin
 
-from funlib.cached import cached_property
 from unicoder import force_unicode, byte_string
 
+from funlib.cached import cached_property
 from .domain import parse_domain
 from .query import QueryParams
 
@@ -47,7 +47,7 @@ class UrlParsed(namedtuple('UrlParsed', ['protocol', 'host', 'port', 'path', 'qu
 class UrlParse(UrlParsed):
 
     def __new__(cls, url):
-        parsed = urlparse(unquoted(url), allow_fragments=False)
+        parsed = urlparse(url, allow_fragments=False)
 
         port = parsed.port
         if port:
@@ -60,11 +60,15 @@ class UrlParse(UrlParsed):
 
 
 def unquote(url):
+    url_unquoted = _unquote(byte_string(url))
+    return force_unicode(url_unquoted) if isinstance(url, unicode) else url_unquoted
+
+
+def _unquote(url):
     unquoted_url = urllib2.unquote(url.strip())
     while unquoted_url != url:
         url = unquoted_url
         unquoted_url = urllib2.unquote(url)
-
     return unquoted_url
 
 
@@ -75,18 +79,13 @@ _unreserved_marks = "-_.!~*'()"
 _safe_chars = urllib.always_safe + '%' + _reserved + _unreserved_marks
 
 
-def quote(url, encoding='utf-8'):
-    s = byte_string(url, encoding)
-    return urllib.quote(s,  _safe_chars)
-
-
-def unquoted(url, encoding='utf-8'):
-    url = force_unicode(unquote(quote(url)), encoding=encoding)
-    return url
+def quote(url):
+    quoted = urllib.quote(byte_string(url),  _safe_chars)
+    return force_unicode(quoted) if isinstance(url, unicode) else quoted
 
 
 def join_url(url, path):
-    return urljoin(url, unquoted(path))
+    return urljoin(url, unquote(path))
 
 
 def is_base_url(url):

@@ -2,25 +2,39 @@ from functools import wraps
 import os
 from urlparse import urljoin, urlparse, urlunparse
 
-from . import Url
+from . import Url, Quoted, quote
 from .query import Query
 from .url import UrlParsed
 
 
-class UrlBuilder(object):
+class UriBuilder(object):
 
-    def __init__(self, host, path='/', port=80, params=None, protocol='http'):
-        super(UrlBuilder, self).__init__()
+    def __init__(self, uri_class, host, path='/', port=80, params=None, protocol='http'):
+        super(UriBuilder, self).__init__()
         self.host = host
         self.path = path
         self.port = port
         self.query = Query(params or {})
         self.protocol = protocol
+        self._uri_class = uri_class
 
-    @property
-    def url(self):
-        parsed = UrlRebuild(self.protocol, self.host, self.port, self.path, unicode(self.query))
-        return parsed.url
+    def build(self):
+        query_string = self._get_query_string()
+        parsed = UrlParsed(self.protocol, self.host, self.port, self.path, query_string)
+        url = '{protocol}://{server}'.format(protocol=parsed.protocol, server=parsed.server)
+        url = urljoin(url, parsed.path + parsed.query_string)
+
+        return self._uri_class(url)
+
+    def _get_query_string(self):
+        url_class = unicode if isinstance(self.host, unicode) or isinstance(self.path, unicode) else str
+
+        query_string = url_class(self.query)
+
+        if isinstance(self._uri_class, Quoted):
+            query_string = quote(query_string)
+
+        return query_string
 
     def join_path(self, *entries):
         if entries:
@@ -42,46 +56,59 @@ class UrlBuilder(object):
         self.query.remove([key])
 
 
-class UrlRebuild(UrlParsed):
+class UrlBuilder(UriBuilder):
+
+    def __init__(self, host, path='/', port=80, params=None, protocol='http', url_class=Url):
+        super(UrlBuilder, self).__init__(url_class, host, path, port, params, protocol)
 
     @property
     def url(self):
-        url = '{protocol}://{server}'.format(protocol=self.protocol, server=self.server)
-
-        url = urljoin(url, self.path + self.query_string)
-
-        return Url(url)
+        return self.build()
 
 
-class UrlModifier(object):
+class UriModifier(object):
 
-    def __init__(self, value):
-        self.url = Url(value)
-        self._builder = UrlBuilder(self.host, self.path, self.port, self.query, self.protocol)
+    def __init__(self, uri):
+        self._uri = uri
 
     def __getattr__(self, item):
         try:
-            return getattr(self.url, item)
+            return getattr(self._uri, item)
         except AttributeError:
-            builder_fun = getattr(self._builder, item)
+            builder = UriBuilder(self.__class__, self.host, self.path, self.port, self.query, self.protocol)
+
+            builder_fun = getattr(builder, item)
 
             @wraps(builder_fun)
             def modify(*args, **kwargs):
                 builder_fun(*args, **kwargs)
-                self.url = self._builder.url
+
+                uri = builder.build()
+                self._uri = uri
                 return self
 
             return modify
 
     @property
     def __class__(self):
-        return self.url.__class__
+        return self._uri.__class__
 
     def __eq__(self, other):
-        return self.url == other
+        return self._uri == other
 
     def __repr__(self):
-        return repr(self.url)
+        return repr(self._uri)
+
+
+class UrlModifier(UriModifier):
+    _url_class = Url
+
+    def __init__(self, value):
+        super(UrlModifier, self).__init__(self._url_class(value))
+
+    @property
+    def url(self):
+        return self._uri
 
 
 def exclude_parameters(url, *excluded):

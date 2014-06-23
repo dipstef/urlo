@@ -1,14 +1,14 @@
 import re
-
-from urlo.url import unquoted as base_unquoted, join_url as base_join
+from urlparse import urljoin
+from .unicode import unquoted as unquoted_unicode
 
 
 def join_url(url, path):
-    return remove_ending_slash(base_join(url, path))
+    return remove_ending_slash(urljoin(url, unquoted_unicode(path)))
 
 
 def unquoted(url):
-    return remove_ending_slash(base_unquoted(url))
+    return remove_ending_slash(unquoted_unicode(url))
 
 
 _ending_slash = re.compile('/+$')

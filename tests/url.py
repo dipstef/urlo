@@ -1,4 +1,4 @@
-from urlo import Url, quote
+from urlo import Url, quote, InternationalizedUrl
 from urlo.parser import UrlBuilder, UrlModifier
 from urlo.url import is_base_url
 
@@ -87,26 +87,35 @@ def _url_builder_test():
 
 def _url_modification_test():
     url = UrlModifier('http://test.com/test?foo=123&bar=456')
-    modified = url.remove_parameters('foo')
-    assert 'http://test.com/test?bar=456' == modified
-    assert isinstance(modified, unicode)
+    url.remove_parameters('foo')
+
+    assert 'http://test.com/test?bar=456' == url
+
+    url.join_path(u'foo')
+
+    assert url == u'http://test.com/test/foo?bar=456'
+    assert isinstance(url, unicode)
 
     url = UrlModifier('http://192.168.1.1:81/test?foo=123')
-    modified = url.add_parameters(bar=456)
-    assert 'http://192.168.1.1:81/test?foo=123&bar=456' == modified
+    url.add_parameters(bar=456)
+    assert 'http://192.168.1.1:81/test?foo=123&bar=456' == url
 
-    assert modified.url == modified
+    assert url.url == url
+    assert isinstance(url, str)
 
 
 def _url_quoting_test():
     url = Url('http://test.com/test?foo=123 456')
-    assert 'http://test.com/test?foo=123%20456' == url.quoted()
+    assert 'http://test.com/test?foo=123%20456' == url
     url = Url('http://test.com/test?foo=123 456')
 
     quoted = quote(quote(quote(url)))
     assert 'http://test.com/test?foo=123%20456' == quoted
     url = Url(quoted)
     assert 'http://test.com/test?foo=123 456' == url.unquoted()
+
+    iri = InternationalizedUrl('http://test.com/test?foo=123 456')
+    assert iri == url.unquoted()
 
 
 def main():
