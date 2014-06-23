@@ -8,6 +8,8 @@ from .query import Query
 class StringOrUnicode(object):
 
     def __new__(cls, value, *more):
+        assert isinstance(value, basestring)
+
         text_class = cls._get_text_class()
 
         bases = [base_class for base_class in cls.__bases__ if base_class != StringOrUnicode]
@@ -20,7 +22,7 @@ class StringOrUnicode(object):
             bases = tuple([cls._original_class()] + bases)
             cls = type(cls.__name__, bases, dict(cls.__dict__))
 
-        return bases[1].__new__(cls, value, *more)
+        return value.__class__.__new__(cls, value, *more)
 
     @classmethod
     def _get_text_class(cls):
@@ -70,18 +72,6 @@ class Unquoted(UrlParseMixin):
     @cached
     def unquoted(self):
         return self.__class__(unquote(self))
-
-
-class UnquotedText(object):
-    def __new__(cls, value, *more):
-        if isinstance(value, unicode):
-            bases = (cls, unicode, Unquoted)
-        else:
-            bases = (cls, str, Unquoted)
-
-        cls2 = type(cls.__name__, bases, dict(cls.__dict__))
-
-        return bases[1].__new__(cls2, value, *more)
 
 
 class InternationalizedUrl(StringOrUnicode, Unquoted):

@@ -4,3 +4,5 @@
 **@eaDir
 build
 hosts.txt
+dist
+*.egg-info

@@ -22,8 +22,3 @@ class InternationalizedUrl(unicode, Unquoted):
 
 def unquoted(url):
     return force_unicode(unquote(url))
-
-url = Url('http://www.google.com')
-
-assert isinstance(url, unicode)
-#print url.encode('utf-8')
