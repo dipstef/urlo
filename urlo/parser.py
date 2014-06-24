@@ -118,9 +118,7 @@ class UriModifier(UriBuilder):
         super(UriModifier, self).__setattr__(name, value)
 
         if not name.startswith('_') and existing_value and existing_value != value:
-            uri = super(UriModifier, self).build()
-            self._uri = uri
-            self._uri_class = uri.__class__
+            self._update_uri()
 
     def __getattr__(self, item):
         return getattr(self._uri, item)
