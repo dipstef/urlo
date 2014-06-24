@@ -97,16 +97,16 @@ class UriModifier(UriBuilder):
     def _get_query_class(self):
         query_class = super(UriModifier, self)._get_query_class()
 
-        class Query(query_class):
+        class QueryModifier(query_class):
 
             def __init__(self, params):
-                super(Query, self).__init__(params)
+                super(QueryModifier, self).__init__(params)
 
             update = self._modifier(query_class.update)
             __setitem__ = self._modifier(query_class.__setitem__)
             __delitem__ = self._modifier(query_class.__delitem__)
 
-        return Query
+        return QueryModifier
 
     def _update_uri(self):
         uri = super(UriModifier, self).build()
