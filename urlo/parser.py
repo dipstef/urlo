@@ -3,7 +3,7 @@ import os
 from urlparse import urljoin, urlparse, urlunparse
 
 from . import Url, Quoted, quote
-from .query import Query, UrlQuery
+from .query import QueryParams, UrlQueryParams
 from .url import UrlParsed
 
 
@@ -19,7 +19,7 @@ class UriBuilder(object):
         self.query = self._get_query_class()(params or {})
 
     def _get_query_class(self):
-        return UrlQuery if issubclass(self._uri_class, Quoted) else Query
+        return UrlQueryParams if issubclass(self._uri_class, Quoted) else QueryParams
 
     def _build(self):
         query_string = self._get_query_string()

@@ -8,7 +8,7 @@ from unicoder import force_unicode, byte_string
 
 from funlib.cached import cached_property
 from .domain import parse_domain
-from .query import QueryParams, UrlQueryParams
+from .query import Query, UrlQuery
 
 
 class UrlParsed(namedtuple('UrlParsed', ['protocol', 'host', 'port', 'path', 'query_string'])):
@@ -33,8 +33,12 @@ class UrlParsed(namedtuple('UrlParsed', ['protocol', 'host', 'port', 'path', 'qu
         return self._host_parsed.sub_domain
 
     @property
+    def sub_domain_name(self):
+        return self._host_parsed.sub_domain_name
+
+    @property
     def query(self):
-        return QueryParams(parse_qs(self.query_string, keep_blank_values=True))
+        return Query(parse_qs(self.query_string, keep_blank_values=True))
 
     def is_valid(self):
         return bool(self.protocol and self.host)
@@ -56,14 +60,18 @@ class UrlParse(UrlParsed):
             host = parsed.netloc
             port = 80
 
-        return super(UrlParsed, cls).__new__(cls, parsed.scheme, host, port, parsed.path, parsed.query)
+        return cls._new(parsed.scheme, host, port, parsed.path, parsed.query)
+
+    @classmethod
+    def _new(cls, scheme, host, port, path, query_string):
+        return super(UrlParsed, cls).__new__(cls, scheme, host, port, path, query_string)
 
 
 class QuotedParse(UrlParse):
 
     @property
     def query(self):
-        return UrlQueryParams(parse_qs(self.query_string, keep_blank_values=True))
+        return UrlQuery(parse_qs(self.query_string, keep_blank_values=True))
 
 
 def unquote(url):

@@ -3,7 +3,7 @@ import urllib
 from unicoder import byte_string, decoded
 
 
-class QueryParams(object):
+class Query(object):
 
     def __init__(self, query=None):
         query = query or {}
@@ -58,10 +58,10 @@ class QueryParams(object):
         return len(self._params)
 
 
-class Query(QueryParams):
+class QueryParams(Query):
 
     def __init__(self, query=None):
-        super(Query, self).__init__(query)
+        super(QueryParams, self).__init__(query)
 
     def __setitem__(self, parameter, value):
         value = str(value)
@@ -88,9 +88,9 @@ def _param_value(value):
     return byte_string(value[0]if isinstance(value, list) else value)
 
 
-class UrlQueryParams(QueryParams):
+class UrlQuery(Query):
     def __init__(self, query=None):
-        super(UrlQueryParams, self).__init__(_quote_params(query))
+        super(UrlQuery, self).__init__(_quote_params(query))
 
 
 def _quote_params(params):
@@ -111,13 +111,13 @@ def _quote_param(value):
     return value
 
 
-class UrlQuery(Query):
+class UrlQueryParams(QueryParams):
 
     def __init__(self, query=None):
-        super(UrlQuery, self).__init__(_quote_params(query))
+        super(UrlQueryParams, self).__init__(_quote_params(query))
 
     def __setitem__(self, parameter, value):
-        super(UrlQuery, self).__setitem__(parameter, _quote_param(value))
+        super(UrlQueryParams, self).__setitem__(parameter, _quote_param(value))
 
     def update(self, params):
-        super(UrlQuery, self).update(_quote_params(params))
+        super(UrlQueryParams, self).update(_quote_params(params))

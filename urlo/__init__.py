@@ -2,7 +2,7 @@ from funlib.cached import cached, cached_property
 
 from .domain import get_domain, get_domain_suffix, parse_domain
 from .url import UrlParse, quote, unquote, QuotedParse
-from .query import Query
+from .query import QueryParams
 
 
 class StringOrUnicode(object):
@@ -44,6 +44,12 @@ class UrlParseMixin(object):
 
     def __getattr__(self, item):
         return getattr(self.parsed, item)
+
+    def __setattr__(self, name, value):
+        if not name.startswith('_') and hasattr(self.parsed, name):
+            setattr(self.parsed, name, value)
+        else:
+            super(UrlParseMixin, self).__setattr__(name, value)
 
 
 class Quoted(UrlParseMixin):
