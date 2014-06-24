@@ -21,7 +21,7 @@ class UriBuilder(object):
     def _get_query_class(self):
         return UrlQuery if issubclass(self._uri_class, Quoted) else Query
 
-    def build(self):
+    def _build(self):
         query_string = self._get_query_string()
         parsed = UrlParsed(self.protocol, self.host, self.port, self.path, query_string)
 
@@ -68,7 +68,7 @@ class UrlBuilder(UriBuilder):
 
     @property
     def url(self):
-        return self.build()
+        return self._build()
 
 
 class UriModifier(UriBuilder):
@@ -109,7 +109,7 @@ class UriModifier(UriBuilder):
         return QueryModifier
 
     def _update_uri(self):
-        uri = super(UriModifier, self).build()
+        uri = super(UriModifier, self)._build()
         self._uri = uri
         self._uri_class = uri.__class__
 

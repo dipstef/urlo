@@ -8,7 +8,7 @@ class InternationalizedUrlBuilder(UriBuilder):
 
     @property
     def iri(self):
-        return self.build()
+        return self._build()
 
 
 class InternationalizedUrlModifier(UriModifier):
