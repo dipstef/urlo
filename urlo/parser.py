@@ -3,7 +3,7 @@ import os
 from urlparse import urljoin, urlparse, urlunparse
 
 from . import Url, Quoted, quote
-from .query import Query
+from .query import Query, UrlQuery
 from .url import UrlParsed
 
 
@@ -14,15 +14,20 @@ class UriBuilder(object):
         self.host = host
         self.path = path
         self.port = port
-        self.query = Query(params or {})
         self.protocol = protocol
         self._uri_class = uri_class
+        self.query = self._get_query_class()(params or {})
+
+    def _get_query_class(self):
+        return UrlQuery if issubclass(self._uri_class, Quoted) else Query
 
     def build(self):
         query_string = self._get_query_string()
         parsed = UrlParsed(self.protocol, self.host, self.port, self.path, query_string)
+
         url = '{protocol}://{server}'.format(protocol=parsed.protocol, server=parsed.server)
-        url = urljoin(url, parsed.path + parsed.query_string)
+        url = urljoin(url, parsed.path)
+        url += parsed.query_string and '?' + parsed.query_string
 
         return self._uri_class(url)
 
@@ -31,7 +36,7 @@ class UriBuilder(object):
 
         query_string = url_class(self.query)
 
-        if isinstance(self._uri_class, Quoted):
+        if issubclass(self._uri_class, Quoted):
             query_string = quote(query_string)
 
         return query_string
@@ -66,28 +71,59 @@ class UrlBuilder(UriBuilder):
         return self.build()
 
 
-class UriModifier(object):
+class UriModifier(UriBuilder):
 
     def __init__(self, uri):
         self._uri = uri
+        super(UriModifier, self).__init__(uri.__class__, uri.host, uri.path, uri.port, uri.query, uri.protocol)
+
+    def __getattribute__(self, item):
+        builder_fun = super(UriModifier, self).__getattribute__(item)
+
+        if callable(builder_fun) and not item.startswith('_'):
+            return self._modifier(builder_fun)
+
+        return builder_fun
+
+    def _modifier(self, modifier_fun):
+        @wraps(modifier_fun)
+        def modify(*args, **kwargs):
+            modifier_fun(*args, **kwargs)
+
+            self._update_uri()
+            return self
+        return modify
+
+    def _get_query_class(self):
+        query_class = super(UriModifier, self)._get_query_class()
+
+        class Query(query_class):
+
+            def __init__(self, params):
+                super(Query, self).__init__(params)
+
+            update = self._modifier(query_class.update)
+            __setitem__ = self._modifier(query_class.__setitem__)
+            __delitem__ = self._modifier(query_class.__delitem__)
+
+        return Query
+
+    def _update_uri(self):
+        uri = super(UriModifier, self).build()
+        self._uri = uri
+        self._uri_class = uri.__class__
+
+    def __setattr__(self, name, value):
+        existing_value = self.__dict__.get(name)
+        super(UriModifier, self).__setattr__(name, value)
+
+        if not name.startswith('_') and existing_value and existing_value != value:
+            uri = super(UriModifier, self).build()
+            self._uri = uri
+            self._uri_class = uri.__class__
 
     def __getattr__(self, item):
-        try:
-            return getattr(self._uri, item)
-        except AttributeError:
-            builder = UriBuilder(self.__class__, self.host, self.path, self.port, self.query, self.protocol)
-
-            builder_fun = getattr(builder, item)
-
-            @wraps(builder_fun)
-            def modify(*args, **kwargs):
-                builder_fun(*args, **kwargs)
-
-                uri = builder.build()
-                self._uri = uri
-                return self
-
-            return modify
+        return getattr(self._uri, item)
 
     @property
     def __class__(self):

@@ -1,5 +1,4 @@
 from urlo import quote, InternationalizedUrl
-from urlo.parser import UrlModifier
 from urlo.unquoted import InternationalizedUrlBuilder, InternationalizedUrlModifier
 from urlo.url import is_base_url
 
@@ -44,6 +43,7 @@ def _sub_domain_test():
 
 def _base_url_test():
     assert 'http://asd.com/' == InternationalizedUrl('http://asd.com/')
+
     assert is_base_url('http://asd.com/')
     assert is_base_url('http://asd.com?')
     assert not is_base_url('http://asd.com?foo=123')
@@ -62,10 +62,9 @@ def _url_parameters_test():
 
 def _url_builder_test():
     url_build = InternationalizedUrlBuilder('test.com', 'test')
+
     assert 'http://test.com/test' == url_build.iri
-
     url_build.add_parameters(foo=123, bar=456)
-
     assert 'http://test.com/test?foo=123&bar=456' == url_build.iri
 
     url_build.remove_parameters('foo')
@@ -88,20 +87,32 @@ def _url_builder_test():
 
 def _url_modification_test():
     url = InternationalizedUrlModifier('http://test.com/test?foo=123&bar=456')
-    url.remove_parameters('foo')
 
+    url.remove_parameters('foo')
     assert 'http://test.com/test?bar=456' == url
 
     url.join_path(u'foo')
-
     assert url == u'http://test.com/test/foo?bar=456'
     assert isinstance(url, unicode)
 
-    url = UrlModifier('http://192.168.1.1:81/test?foo=123')
+    url = InternationalizedUrlModifier('http://192.168.1.1:81/test?foo=123')
+
     url.add_parameters(bar=456)
     assert 'http://192.168.1.1:81/test?foo=123&bar=456' == url
 
-    assert url.url == url
+    assert url.iri == url
+
+    url.query['bar'] = '457 789'
+    assert 'http://192.168.1.1:81/test?foo=123&bar=456&bar=457 789' == url
+    assert url.query['bar'] == '456'
+
+    url.host = 'test.com'
+    assert url == 'http://test.com:81/test?foo=123&bar=456&bar=457 789'
+
+    url.query['bau'] = 'asd qwe'
+    assert url == 'http://test.com:81/test?foo=123&bar=456&bar=457 789&bau=asd qwe'
+    assert url.query['bau'] == 'asd qwe'
+
     assert isinstance(url, str)
 
 
@@ -110,6 +121,7 @@ def _url_quoting_test():
     assert 'http://test.com/test?foo=123 456' == url
 
     quoted = quote(quote(quote(url)))
+
     assert 'http://test.com/test?foo=123%20456' == quoted
     url = InternationalizedUrl(quoted)
     assert 'http://test.com/test?foo=123 456' == url.unquoted()

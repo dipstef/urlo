@@ -1,7 +1,7 @@
 from funlib.cached import cached, cached_property
 
 from .domain import get_domain, get_domain_suffix, parse_domain
-from .url import UrlParse, quote, unquote
+from .url import UrlParse, quote, unquote, QuotedParse
 from .query import Query
 
 
@@ -47,6 +47,10 @@ class UrlParseMixin(object):
 
 
 class Quoted(UrlParseMixin):
+
+    @cached_property
+    def parsed(self):
+        return QuotedParse(self)
 
     @cached
     def quoted(self):

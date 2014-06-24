@@ -43,6 +43,7 @@ def _sub_domain_test():
 
 def _base_url_test():
     assert 'http://asd.com/' == Url('http://asd.com/')
+
     assert is_base_url('http://asd.com/')
     assert is_base_url('http://asd.com?')
     assert not is_base_url('http://asd.com?foo=123')
@@ -61,8 +62,8 @@ def _url_parameters_test():
 
 def _url_builder_test():
     url_build = UrlBuilder('test.com', 'test')
-    assert 'http://test.com/test' == url_build.url
 
+    assert 'http://test.com/test' == url_build.url
     url_build.add_parameters(foo=123, bar=456)
 
     assert 'http://test.com/test?foo=123&bar=456' == url_build.url
@@ -82,34 +83,47 @@ def _url_builder_test():
     assert url_build.url == 'http://test.com/test?foo=123&foo=456'
 
     url = Url('http://test.com/test?foo=123 456')
-    assert url.query['foo'] == '123 456'
+    assert url.query['foo'] == '123%20456'
 
 
 def _url_modification_test():
     url = UrlModifier('http://test.com/test?foo=123&bar=456')
-    url.remove_parameters('foo')
 
+    url.remove_parameters('foo')
     assert 'http://test.com/test?bar=456' == url
 
     url.join_path(u'foo')
-
     assert url == u'http://test.com/test/foo?bar=456'
     assert isinstance(url, unicode)
 
     url = UrlModifier('http://192.168.1.1:81/test?foo=123')
+
     url.add_parameters(bar=456)
     assert 'http://192.168.1.1:81/test?foo=123&bar=456' == url
 
     assert url.url == url
+
+    url.query['bar'] = '457 789'
+    assert 'http://192.168.1.1:81/test?foo=123&bar=456&bar=457%20789' == url
+    assert url.query['bar'] == '456'
+
+    url.host = 'test.com'
+    assert url == 'http://test.com:81/test?foo=123&bar=456&bar=457%20789'
+
+    url.query['bau'] = 'asd qwe'
+    assert url == 'http://test.com:81/test?foo=123&bar=456&bar=457%20789&bau=asd%20qwe'
+    assert url.query['bau'] == 'asd%20qwe'
+
     assert isinstance(url, str)
 
 
 def _url_quoting_test():
     url = Url('http://test.com/test?foo=123 456')
     assert 'http://test.com/test?foo=123%20456' == url
-    url = Url('http://test.com/test?foo=123 456')
 
-    quoted = quote(quote(quote(url)))
+    assert url.query['foo'] == '123%20456'
+
+    quoted = quote(quote(quote('http://test.com/test?foo=123 456')))
     assert 'http://test.com/test?foo=123%20456' == quoted
     url = Url(quoted)
     assert 'http://test.com/test?foo=123 456' == url.unquoted()

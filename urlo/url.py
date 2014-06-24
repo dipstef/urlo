@@ -8,7 +8,7 @@ from unicoder import force_unicode, byte_string
 
 from funlib.cached import cached_property
 from .domain import parse_domain
-from .query import QueryParams
+from .query import QueryParams, UrlQueryParams
 
 
 class UrlParsed(namedtuple('UrlParsed', ['protocol', 'host', 'port', 'path', 'query_string'])):
@@ -57,6 +57,13 @@ class UrlParse(UrlParsed):
             port = 80
 
         return super(UrlParsed, cls).__new__(cls, parsed.scheme, host, port, parsed.path, parsed.query)
+
+
+class QuotedParse(UrlParse):
+
+    @property
+    def query(self):
+        return UrlQueryParams(parse_qs(self.query_string, keep_blank_values=True))
 
 
 def unquote(url):

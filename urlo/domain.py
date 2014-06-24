@@ -1,3 +1,4 @@
+from collections import namedtuple
 import os
 from tldextract import tldextract
 
@@ -47,11 +48,9 @@ def parse_domain(url):
     return DomainInfo(_sub_domain_name(ext), _domain(ext), ext.suffix)
 
 
-class DomainInfo(object):
-    def __init__(self, sub_domain_name, domain, suffix):
-        self.sub_domain_name = sub_domain_name
-        self.domain = domain
-        self.suffix = suffix
+class DomainInfo(namedtuple('DomainInfo', ['sub_domain_name', 'domain', 'suffix'])):
+    def __new__(cls, sub_domain_name, domain, suffix):
+        return super(DomainInfo, cls).__new__(cls, sub_domain_name, domain, suffix)
 
     @property
     def sub_domain(self):

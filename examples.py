@@ -1,10 +1,13 @@
-from urlparse import urljoin, parse_qs
+from urlparse import urljoin
+
 from urlo import Url, InternationalizedUrl
+
 
 url = Url('http://www.google.com/query?s=foo&bar=1')
 #assert isinstance(url, str)
 
 print url.parsed
+print url.query
 assert url.query == {'s': 'foo', 'bar': '1'}
 assert url.domain == 'google.com'
 print url.quoted()
