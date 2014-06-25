@@ -42,6 +42,7 @@ Uses tldextract for correct top level domain parsing:
 .. code-block:: python
 
     >>> url = Url('http://long.sub.domain.at.bbc.co.uk')
+
     assert url.domain == 'bbc.co.uk'
     assert url.sub_domain_name == 'long.sub.domain.at'
 
@@ -75,6 +76,7 @@ Internationalized resource identifier
 
     >>> url.parsed
     UrlParsed(protocol='http', host='www.g\xc3\xb6\xc3\xb6gle.com', port=80, path='/s\xc3\xb6k', query_string='s=foo bar')
+
     assert url.host == url.parsed.host == 'www.göögle.com'
     assert url.path == url.parsed.path == '/sök'
 
