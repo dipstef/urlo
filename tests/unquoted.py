@@ -72,8 +72,8 @@ def _url_builder_test():
     url_build.remove_parameters()
 
     assert 'http://test.com/test' == url_build.iri
-    url_build['foo'] = 123
-    url_build['foo'] = 456
+    url_build.query.add('foo',  123)
+    url_build.query.add('foo',  456)
 
     assert url_build.query == {'foo': ['123', '456']}
     assert url_build['foo'] == '123'
@@ -102,7 +102,7 @@ def _url_modification_test():
 
     assert url.iri == url
 
-    url.query['bar'] = '457 789'
+    url.query.add('bar', '457 789')
     assert 'http://192.168.1.1:81/test?foo=123&bar=456&bar=457 789' == url
     assert url.query['bar'] == '456'
 

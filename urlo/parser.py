@@ -2,20 +2,17 @@ from collections import namedtuple
 import re
 import urllib
 import urllib2
-from urlparse import parse_qs, urlparse, urljoin
+from urlparse import urlparse, urlunsplit, urlsplit
 
 from unicoder import force_unicode, byte_string
-
 from funlib.cached import cached_property
+
 from .domain import parse_domain
 from .query import Query, UrlQuery
 from .validation import validate, UrlError
 
 
-class UrlParsed(namedtuple('UrlParsed', ['scheme', 'host', 'port', 'path', 'query_string', 'fragment'])):
-
-    def __new__(cls, scheme, host, port, path, query_string, fragment=''):
-        return super(UrlParsed, cls).__new__(cls, scheme, host, port, path, query_string, fragment)
+class UrlParsed(namedtuple('UrlParsed', ['scheme', 'host', 'port', 'path', 'query_string'])):
 
     @cached_property
     def _host_parsed(self):
@@ -39,7 +36,11 @@ class UrlParsed(namedtuple('UrlParsed', ['scheme', 'host', 'port', 'path', 'quer
 
     @cached_property
     def query(self):
-        return Query(parse_qs(self.query_string, keep_blank_values=True))
+        return self._query_parser(self.query_string)
+
+    @staticmethod
+    def _query_parser(query_string):
+        return Query.parse(query_string)
 
     def is_relative(self):
         return not self.host
@@ -59,7 +60,11 @@ class UrlParsed(namedtuple('UrlParsed', ['scheme', 'host', 'port', 'path', 'quer
         return '{host}{port}'.format(host=self.host, port=':%d' % self.port if self.port != 80 else '')
 
 
-class UrlParse(UrlParsed):
+class UrlFragment(namedtuple('UrlParsed', ['scheme', 'host', 'port', 'path', 'query_string', 'fragment']), UrlParsed):
+    pass
+
+
+class UrlParse(object):
 
     def __new__(cls, url):
         parsed = urlparse(url, allow_fragments=False)
@@ -75,14 +80,19 @@ class UrlParse(UrlParsed):
 
     @classmethod
     def _new(cls, scheme, host, port, path, query_string, fragment):
-        return super(UrlParse, cls).__new__(cls, scheme, host, port, path, query_string, fragment)
+        if fragment:
+            return UrlFragment(scheme, host, port, path, query_string, fragment)
+        else:
+            return UrlParsed(scheme, host, port, path, query_string)
 
 
 class QuotedParse(UrlParse):
 
-    @property
-    def query(self):
-        return UrlQuery(parse_qs(self.query_string, keep_blank_values=True))
+    @classmethod
+    def _new(cls, scheme, host, port, path, query_string, fragment):
+        parsed = super(QuotedParse, cls)._new(scheme, host, port, path, query_string, fragment)
+        parsed._query_parser = UrlQuery.parse
+        return parsed
 
 
 def unquote(url):
@@ -123,3 +133,16 @@ def get_parameter_value(url, parameter):
     url = UrlParse(url)
 
     return url.query[parameter]
+
+
+def urljoin(*parts):
+    """Normalize url parts and join them with a slash."""
+    schemes, netlocs, paths, queries, fragments = zip(*(urlsplit(part) for part in parts))
+    scheme, netloc, query, fragment = _first_of_each(schemes, netlocs, queries, fragments)
+
+    path = '/'.join(x.strip('/') for x in paths if x)
+    return urlunsplit((scheme, netloc, path, query, fragment))
+
+
+def _first_of_each(*sequences):
+    return (next((x for x in sequence if x), '') for sequence in sequences)

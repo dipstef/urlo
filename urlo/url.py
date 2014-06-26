@@ -1,8 +1,8 @@
 from functools import wraps
 import os
-from urlparse import urljoin, urlparse, urlunparse
+from urlparse import urlparse, urlunparse
 
-from . import Url, Quoted, quote
+from . import Url, Quoted, quote, join_url
 from .query import QueryParams, UrlQueryParams
 from .parser import UrlParsed
 
@@ -26,7 +26,7 @@ class UriBuilder(object):
         parsed = UrlParsed(self.scheme, self.host, self.port, self.path, query_string)
 
         url = '{scheme}://{server}'.format(scheme=parsed.scheme, server=parsed.server)
-        url = urljoin(url, parsed.path)
+        url = join_url(url, parsed.path)
         url += parsed.query_string and '?' + parsed.query_string
 
         return self._uri_class(url)
@@ -103,6 +103,7 @@ class UriModifier(UriBuilder):
                 super(QueryModifier, self).__init__(params)
 
             update = self._modifier(query_class.update)
+            add = self._modifier(query_class.add)
             __setitem__ = self._modifier(query_class.__setitem__)
             __delitem__ = self._modifier(query_class.__delitem__)
 
@@ -130,8 +131,8 @@ class UriModifier(UriBuilder):
     def __eq__(self, other):
         return self._uri == other
 
-    def __repr__(self):
-        return repr(self._uri)
+    def __str__(self):
+        return str(self._uri)
 
 
 class UrlModifier(UriModifier):

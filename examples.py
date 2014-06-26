@@ -2,7 +2,9 @@
 from urlparse import urljoin
 
 from urlo import Url, InternationalizedUrl
-from urlo.url import build_url
+from urlo.query import parse_query, QueryParams
+from urlo.unquoted import InternationalizedUrlModifier
+from urlo.url import build_url, UrlBuilder, UrlModifier
 
 
 url = Url('http://www.google.com/query?s=foo&bar=1')
@@ -15,7 +17,7 @@ assert url.domain == 'google.com'
 print url.quoted()
 
 print url.parsed
-assert url.parsed == ('http', 'www.google.com', 80, '/query', 's=foo&bar=1', '')
+assert url.parsed == ('http', 'www.google.com', 80, '/query', 's=foo&bar=1')
 
 assert url.domain == 'google.com'
 assert url.sub_domain_name == 'www'
@@ -65,4 +67,37 @@ print Url('/home').validate()
 assert Url('/home').is_relative()
 
 
-print build_url(scheme='foo', host='bar.com', path='/test')
+print build_url(scheme='foo', host='bar.com', path='test')
+builder = UrlBuilder(scheme='foo', host='bar.com', path='test')
+
+builder.query['s'] = 1
+builder.add_parameters(f=2, g=3)
+
+print builder.url
+
+
+url = UrlModifier('http://www.google.com/query?s=foo')
+url.host = 'göögle.com'
+print url
+url.path = 'sök'
+print url
+url.add_parameters(t='ö')
+print url
+url.query['n'] = 2
+
+print url.parsed
+
+
+url = InternationalizedUrlModifier('http://www.google.com/query?s=foo')
+
+url.host = 'göögle.com'
+url.path = 'sök'
+del url.query['s']
+url.query['s'] = 'ö'
+print url
+print url.parsed
+
+query = QueryParams.parse('s=foo')
+assert query['s'] == 'foo'
+query.add('s', 'bar')
+assert query.get_values('s') == ['foo', 'bar']

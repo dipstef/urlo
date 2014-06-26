@@ -106,3 +106,75 @@ Validation
     >>> Url('/home').validate()
     UrlParsed(scheme='', host='', port=80, path='/home', query_string='')
     >>> assert Url('/home').is_relative()
+
+Building
+========
+
+.. code-block:: python
+
+    from urlo.url import build_url, UrlBuilder
+
+    >>> build_url(scheme='foo', host='bar.com', path='test')
+    'foo://bar.com/test'
+    >>> UrlBuilder(scheme='foo', host='bar.com', path='test')
+
+    builder = UrlBuilder(scheme='foo', host='bar.com', path='test')
+
+    >>> builder.query['s'] = 1
+    >>> builder.add_parameters(f=2, g=3)
+    >>> builder.url
+    'foo://bar.com/test?s=1&g=3&f=2'
+
+
+Modifying
+=========
+
+Mutable urls:
+
+.. code-block:: python
+
+    from urlo.url import UrlModifier
+
+    >>> url = UrlModifier('http://www.google.com/query?s=foo')
+    url.host = 'göögle.com'
+    'http://g%C3%B6%C3%B6gle.com/query?s=foo'
+    >>> url.path = 'sök'
+    'http://g%C3%B6%C3%B6gle.com/s%C3%B6k?s=foo'
+    >>> url.add_parameters(t=1)
+    'http://g%C3%B6%C3%B6gle.com/s%C3%B6k?s=foo&t=%25C3%25B6'
+    url.query['n'] = 2
+    'http://g%C3%B6%C3%B6gle.com/s%C3%B6k?s=foo&t=%25C3%25B6&n=2'
+
+    >>> url.parsed
+    UrlParsed(scheme='http', host='g%C3%B6%C3%B6gle.com', port=80, path='/s%C3%B6k', query_string='s=foo&t=1&n=2')
+
+    from urlo.unquoted import InternationalizedUrlModifier
+
+As well internationalized urls
+
+.. code-block:: python
+
+    >>> url = InternationalizedUrlModifier'http://www.google.com/query?s=foo')
+
+    >>> url.host = 'göögle.com'
+    >>> url.path = 'sök'
+    >>> del url.query['s']
+    >>> url.query['s'] = 'ö'
+    'http://göögle.com/sök?s=ö'
+
+    >>> url.parsed
+    UrlParsed(scheme='http', host='g\xc3\xb6\xc3\xb6gle.com', port=80, path='/s\xc3\xb6k', query_string='s=\xc3\xb6')
+
+Query
+=====
+Supports multiple values for parameters
+
+.. code-block:: python
+
+    from url.query import QueryParams
+
+    query = QueryParams.parse('s=foo')
+    query.add('s', 'bar')
+    assert query['s'] == 'foo'
+
+    assert query.get_values('s') == ['foo', 'bar']
