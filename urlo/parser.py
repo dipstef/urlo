@@ -9,12 +9,12 @@ from .url import UrlParsed
 
 class UriBuilder(object):
 
-    def __init__(self, uri_class, host, path='/', port=80, params=None, protocol='http'):
+    def __init__(self, uri_class, host, path='/', port=80, params=None, scheme='http'):
         super(UriBuilder, self).__init__()
         self.host = host
         self.path = path
         self.port = port
-        self.protocol = protocol
+        self.scheme = scheme
         self._uri_class = uri_class
         self.query = self._get_query_class()(params or {})
 
@@ -23,9 +23,9 @@ class UriBuilder(object):
 
     def _build(self):
         query_string = self._get_query_string()
-        parsed = UrlParsed(self.protocol, self.host, self.port, self.path, query_string)
+        parsed = UrlParsed(self.scheme, self.host, self.port, self.path, query_string)
 
-        url = '{protocol}://{server}'.format(protocol=parsed.protocol, server=parsed.server)
+        url = '{scheme}://{server}'.format(scheme=parsed.scheme, server=parsed.server)
         url = urljoin(url, parsed.path)
         url += parsed.query_string and '?' + parsed.query_string
 
@@ -63,8 +63,8 @@ class UriBuilder(object):
 
 class UrlBuilder(UriBuilder):
 
-    def __init__(self, host, path='/', port=80, params=None, protocol='http', url_class=Url):
-        super(UrlBuilder, self).__init__(url_class, host, path, port, params, protocol)
+    def __init__(self, host, path='/', port=80, params=None, scheme='http', url_class=Url):
+        super(UrlBuilder, self).__init__(url_class, host, path, port, params, scheme)
 
     @property
     def url(self):
@@ -75,7 +75,7 @@ class UriModifier(UriBuilder):
 
     def __init__(self, uri):
         self._uri = uri
-        super(UriModifier, self).__init__(uri.__class__, uri.host, uri.path, uri.port, uri.query, uri.protocol)
+        super(UriModifier, self).__init__(uri.__class__, uri.host, uri.path, uri.port, uri.query, uri.scheme)
 
     def __getattribute__(self, item):
         builder_fun = super(UriModifier, self).__getattribute__(item)
@@ -158,8 +158,8 @@ def remove_query(url):
     return urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, '', parsed.fragment))
 
 
-def build_url(host, path='', port=80, params=None, protocol='http'):
-    url_build = UrlBuilder(host, path, port, params, protocol)
+def build_url(host, path='', port=80, params=None, scheme='http'):
+    url_build = UrlBuilder(host, path, port, params, scheme)
 
     return url_build.url
 

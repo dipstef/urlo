@@ -3,8 +3,8 @@ from .parser import UriBuilder, UriModifier
 
 
 class InternationalizedUrlBuilder(UriBuilder):
-    def __init__(self, host, path='/', port=80, params=None, protocol='http'):
-        super(InternationalizedUrlBuilder, self).__init__(InternationalizedUrl, host, path, port, params, protocol)
+    def __init__(self, host, path='/', port=80, params=None, scheme='http'):
+        super(InternationalizedUrlBuilder, self).__init__(InternationalizedUrl, host, path, port, params, scheme)
 
     @property
     def iri(self):
@@ -27,8 +27,8 @@ def exclude_parameters(url, *excluded):
     return iri_modifier.iri
 
 
-def build_url(host, path='', port=80, params=None, protocol='http'):
-    iri_build = InternationalizedUrlBuilder(host, path, port, params, protocol)
+def build_url(host, path='', port=80, params=None, scheme='http'):
+    iri_build = InternationalizedUrlBuilder(host, path, port, params, scheme)
 
     return iri_build.iri
 

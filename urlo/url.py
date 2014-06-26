@@ -9,12 +9,13 @@ from unicoder import force_unicode, byte_string
 from funlib.cached import cached_property
 from .domain import parse_domain
 from .query import Query, UrlQuery
+from urlo.validation import validate, UrlError
 
 
-class UrlParsed(namedtuple('UrlParsed', ['protocol', 'host', 'port', 'path', 'query_string'])):
+class UrlParsed(namedtuple('UrlParsed', ['scheme', 'host', 'port', 'path', 'query_string'])):
 
-    def __new__(cls, protocol, host, port, path, query_string=''):
-        return super(UrlParsed, cls).__new__(cls, protocol, host, int(port), path, query_string)
+    def __new__(cls, scheme, host, port, path, query_string=''):
+        return super(UrlParsed, cls).__new__(cls, scheme, host, int(port), path, query_string)
 
     @cached_property
     def _host_parsed(self):
@@ -40,8 +41,18 @@ class UrlParsed(namedtuple('UrlParsed', ['protocol', 'host', 'port', 'path', 'qu
     def query(self):
         return Query(parse_qs(self.query_string, keep_blank_values=True))
 
+    def is_relative(self):
+        return not self.host
+
     def is_valid(self):
-        return bool(self.protocol and self.host)
+        try:
+            return bool(self.validate())
+        except UrlError:
+            return False
+
+    def validate(self):
+        validate(self)
+        return self
 
     @cached_property
     def server(self):

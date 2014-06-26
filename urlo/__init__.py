@@ -1,7 +1,7 @@
 from funlib.cached import cached, cached_property
 
 from .domain import get_domain, get_domain_suffix, parse_domain
-from .url import UrlParse, quote, unquote, QuotedParse
+from .url import UrlParse, quote, unquote, QuotedParse, join_url
 from .query import QueryParams
 
 
@@ -36,7 +36,7 @@ class StringOrUnicode(object):
         return cls if StringOrUnicode in bases else bases[0]._original_class()
 
 
-class UrlParseMixin(object):
+class UrlMixin(object):
 
     @cached_property
     def parsed(self):
@@ -49,10 +49,13 @@ class UrlParseMixin(object):
         if not name.startswith('_') and hasattr(self.parsed, name):
             setattr(self.parsed, name, value)
         else:
-            super(UrlParseMixin, self).__setattr__(name, value)
+            super(UrlMixin, self).__setattr__(name, value)
+
+    def join_to(self, other):
+        return self.__class__(join_url(self, other))
 
 
-class Quoted(UrlParseMixin):
+class Quoted(UrlMixin):
 
     @cached_property
     def parsed(self):
@@ -73,7 +76,7 @@ class Url(StringOrUnicode, Quoted):
         return super(Url, cls).__new__(cls, quote(value.strip()), *more)
 
 
-class Unquoted(UrlParseMixin):
+class Unquoted(UrlMixin):
 
     @cached
     def quoted(self):

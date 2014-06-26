@@ -55,3 +55,10 @@ print url.query
 
 test = urljoin('http://test.com', u'?asd')
 print test
+
+print Url('http://www.google.com/query?s=foo&bar=1').validate()
+print Url('http://long.sub.domain.at.bbc.co.uk').validate()
+print Url('http://127.0.0.1/home').validate()
+print Url('/home').validate()
+assert Url('/home').is_relative()
+

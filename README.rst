@@ -14,7 +14,7 @@ Extends byte string or unicode objects
     assert isinstance(url, str)
 
     >>> url.parsed
-    UrlParsed(protocol='http', host='www.google.com', port=80, path='/query', query_string='s=foo&bar=1')
+    UrlParsed(scheme='http', host='www.google.com', port=80, path='/query', query_string='s=foo&bar=1')
 
     assert url.parsed == ('http', 'www.google.com', 80, '/query', 's=foo&bar=1')
 
@@ -57,7 +57,7 @@ Ascii characters are enforced
     'http://www.g%C3%B6%C3%B6gle.com/query?s=foo%20bar'
 
     >>> url.parsed
-    UrlParsed(protocol='http', host='www.g%C3%B6%C3%B6gle.com', port=80, path='/query', query_string='s=foo%20bar')
+    UrlParsed(scheme='http', host='www.g%C3%B6%C3%B6gle.com', port=80, path='/query', query_string='s=foo%20bar')
 
     assert url.query['s'] == 'foo%20bar'
 
@@ -75,10 +75,29 @@ Internationalized resource identifier
     'http://www.göögle.com/sök?s=foo bar'
 
     >>> url.parsed
-    UrlParsed(protocol='http', host='www.g\xc3\xb6\xc3\xb6gle.com', port=80, path='/s\xc3\xb6k', query_string='s=foo bar')
+    UrlParsed(scheme='http', host='www.g\xc3\xb6\xc3\xb6gle.com', port=80, path='/s\xc3\xb6k', query_string='s=foo bar')
 
     assert url.host == url.parsed.host == 'www.göögle.com'
     assert url.path == url.parsed.path == '/sök'
 
     assert url.query == {'s': 'foo bar'}
     assert url.query['s'] == 'foo bar'
+
+Validation
+==========
+
+    >>> Url('http://www.google.com/query?s=foo&bar=1').validate()
+    UrlParsed(scheme='http', host='www.google.com', port=80, path='/query', query_string='s=foo&bar=1')
+    >>> Url('http://long.sub.domain.at.bbc.co.uk').validate()
+    UrlParsed(scheme='http', host='long.sub.domain.at.bbc.co.uk', port=80, path='', query_string='')
+    >>> Url('http://www.google/query?s=foo&bar=1').validate()
+    InvalidHost('www.google')
+
+    >>> Url('http://127.0.0.1/home').validate()
+    UrlParsed(scheme='http', host='127.0.0.1', port=80, path='/home', query_string='')
+    >>> Url('http://127.0.0./home').validate()
+    InvalidHost('127.0.0')
+
+    >>> Url('/home').validate()
+    UrlParsed(scheme='', host='', port=80, path='/home', query_string='')
+    >>> assert Url('/home').is_relative()

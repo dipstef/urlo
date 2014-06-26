@@ -130,6 +130,13 @@ def _url_quoting_test():
     assert iri == url.unquoted()
 
 
+def _url_join_test():
+    url = InternationalizedUrl('http://test.com')
+
+    assert 'http://test.com/join' == url.join_to('/join')
+    assert 'http://test.com/join' == url.join_to('http://test.com/join')
+
+
 def main():
     _url_parsing_test()
     _ip_url_test()
@@ -142,7 +149,7 @@ def main():
     _url_modification_test()
 
     _url_quoting_test()
-
+    _url_join_test()
 
 if __name__ == '__main__':
     main()
