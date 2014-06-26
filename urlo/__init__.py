@@ -1,7 +1,7 @@
 from funlib.cached import cached, cached_property
 
 from .domain import get_domain, get_domain_suffix, parse_domain
-from .url import UrlParse, quote, unquote, QuotedParse, join_url
+from .parser import UrlParse, quote, unquote, QuotedParse, join_url
 from .query import QueryParams
 
 

@@ -2,6 +2,7 @@
 from urlparse import urljoin
 
 from urlo import Url, InternationalizedUrl
+from urlo.url import build_url
 
 
 url = Url('http://www.google.com/query?s=foo&bar=1')
@@ -13,7 +14,8 @@ assert url.query == {'s': 'foo', 'bar': '1'}
 assert url.domain == 'google.com'
 print url.quoted()
 
-assert url.parsed == ('http', 'www.google.com', 80, '/query', 's=foo&bar=1')
+print url.parsed
+assert url.parsed == ('http', 'www.google.com', 80, '/query', 's=foo&bar=1', '')
 
 assert url.domain == 'google.com'
 assert url.sub_domain_name == 'www'
@@ -28,7 +30,7 @@ assert url.domain_suffix == 'com'
 url = Url('http://www.göögle.com/query?s=foo bar')
 print url
 print 'URL:', url.parsed
-
+print type(url.query)
 assert url.query['s'] == 'foo%20bar'
 
 
@@ -62,3 +64,5 @@ print Url('http://127.0.0.1/home').validate()
 print Url('/home').validate()
 assert Url('/home').is_relative()
 
+
+print build_url(scheme='foo', host='bar.com', path='/test')

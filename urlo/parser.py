@@ -1,172 +1,125 @@
-from functools import wraps
-import os
-from urlparse import urljoin, urlparse, urlunparse
+from collections import namedtuple
+import re
+import urllib
+import urllib2
+from urlparse import parse_qs, urlparse, urljoin
 
-from . import Url, Quoted, quote
-from .query import QueryParams, UrlQueryParams
-from .url import UrlParsed
+from unicoder import force_unicode, byte_string
 
-
-class UriBuilder(object):
-
-    def __init__(self, uri_class, host, path='/', port=80, params=None, scheme='http'):
-        super(UriBuilder, self).__init__()
-        self.host = host
-        self.path = path
-        self.port = port
-        self.scheme = scheme
-        self._uri_class = uri_class
-        self.query = self._get_query_class()(params or {})
-
-    def _get_query_class(self):
-        return UrlQueryParams if issubclass(self._uri_class, Quoted) else QueryParams
-
-    def _build(self):
-        query_string = self._get_query_string()
-        parsed = UrlParsed(self.scheme, self.host, self.port, self.path, query_string)
-
-        url = '{scheme}://{server}'.format(scheme=parsed.scheme, server=parsed.server)
-        url = urljoin(url, parsed.path)
-        url += parsed.query_string and '?' + parsed.query_string
-
-        return self._uri_class(url)
-
-    def _get_query_string(self):
-        url_class = unicode if isinstance(self.host, unicode) or isinstance(self.path, unicode) else str
-
-        query_string = url_class(self.query)
-
-        if issubclass(self._uri_class, Quoted):
-            query_string = quote(query_string)
-
-        return query_string
-
-    def join_path(self, *entries):
-        if entries:
-            self.path = os.path.join(self.path, *entries)
-
-    def add_parameters(self, **params):
-        self.query.update(params)
-
-    def remove_parameters(self, *params):
-        self.query.remove(*params)
-
-    def __getitem__(self, item):
-        return self.query[item]
-
-    def __setitem__(self, key, value):
-        self.query[key] = value
-
-    def __delitem__(self, key):
-        self.query.remove([key])
+from funlib.cached import cached_property
+from .domain import parse_domain
+from .query import Query, UrlQuery
+from .validation import validate, UrlError
 
 
-class UrlBuilder(UriBuilder):
+class UrlParsed(namedtuple('UrlParsed', ['scheme', 'host', 'port', 'path', 'query_string', 'fragment'])):
 
-    def __init__(self, host, path='/', port=80, params=None, scheme='http', url_class=Url):
-        super(UrlBuilder, self).__init__(url_class, host, path, port, params, scheme)
+    def __new__(cls, scheme, host, port, path, query_string, fragment=''):
+        return super(UrlParsed, cls).__new__(cls, scheme, host, port, path, query_string, fragment)
+
+    @cached_property
+    def _host_parsed(self):
+        return parse_domain(self.host)
 
     @property
-    def url(self):
-        return self._build()
-
-
-class UriModifier(UriBuilder):
-
-    def __init__(self, uri):
-        self._uri = uri
-        super(UriModifier, self).__init__(uri.__class__, uri.host, uri.path, uri.port, uri.query, uri.scheme)
-
-    def __getattribute__(self, item):
-        builder_fun = super(UriModifier, self).__getattribute__(item)
-
-        if callable(builder_fun) and not item.startswith('_'):
-            return self._modifier(builder_fun)
-
-        return builder_fun
-
-    def _modifier(self, modifier_fun):
-        @wraps(modifier_fun)
-        def modify(*args, **kwargs):
-            modifier_fun(*args, **kwargs)
-
-            self._update_uri()
-            return self
-        return modify
-
-    def _get_query_class(self):
-        query_class = super(UriModifier, self)._get_query_class()
-
-        class QueryModifier(query_class):
-
-            def __init__(self, params):
-                super(QueryModifier, self).__init__(params)
-
-            update = self._modifier(query_class.update)
-            __setitem__ = self._modifier(query_class.__setitem__)
-            __delitem__ = self._modifier(query_class.__delitem__)
-
-        return QueryModifier
-
-    def _update_uri(self):
-        uri = super(UriModifier, self)._build()
-        self._uri = uri
-        self._uri_class = uri.__class__
-
-    def __setattr__(self, name, value):
-        existing_value = self.__dict__.get(name)
-        super(UriModifier, self).__setattr__(name, value)
-
-        if not name.startswith('_') and existing_value and existing_value != value:
-            self._update_uri()
-
-    def __getattr__(self, item):
-        return getattr(self._uri, item)
+    def domain(self):
+        return self._host_parsed.domain
 
     @property
-    def __class__(self):
-        return self._uri.__class__
-
-    def __eq__(self, other):
-        return self._uri == other
-
-    def __repr__(self):
-        return repr(self._uri)
-
-
-class UrlModifier(UriModifier):
-    _url_class = Url
-
-    def __init__(self, value):
-        super(UrlModifier, self).__init__(self._url_class(value))
+    def domain_suffix(self):
+        return self._host_parsed.suffix
 
     @property
-    def url(self):
-        return self._uri
+    def sub_domain(self):
+        return self._host_parsed.sub_domain
+
+    @property
+    def sub_domain_name(self):
+        return self._host_parsed.sub_domain_name
+
+    @cached_property
+    def query(self):
+        return Query(parse_qs(self.query_string, keep_blank_values=True))
+
+    def is_relative(self):
+        return not self.host
+
+    def is_valid(self):
+        try:
+            return bool(self.validate())
+        except UrlError:
+            return False
+
+    def validate(self):
+        validate(self)
+        return self
+
+    @cached_property
+    def server(self):
+        return '{host}{port}'.format(host=self.host, port=':%d' % self.port if self.port != 80 else '')
 
 
-def exclude_parameters(url, *excluded):
-    url_modifier = UrlModifier(url)
-    url_modifier.remove_parameters(*excluded)
+class UrlParse(UrlParsed):
 
-    return url_modifier.url
+    def __new__(cls, url):
+        parsed = urlparse(url, allow_fragments=False)
+
+        port = parsed.port
+        if port:
+            host = re.sub(':%s' % str(port), '', parsed.netloc)
+        else:
+            host = parsed.netloc
+            port = 80
+
+        return cls._new(parsed.scheme, host, port, parsed.path, parsed.query, parsed.fragment)
+
+    @classmethod
+    def _new(cls, scheme, host, port, path, query_string, fragment):
+        return super(UrlParse, cls).__new__(cls, scheme, host, port, path, query_string, fragment)
 
 
-def remove_query(url):
-    parsed = urlparse(url)
+class QuotedParse(UrlParse):
 
-    return urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, '', parsed.fragment))
-
-
-def build_url(host, path='', port=80, params=None, scheme='http'):
-    url_build = UrlBuilder(host, path, port, params, scheme)
-
-    return url_build.url
+    @property
+    def query(self):
+        return UrlQuery(parse_qs(self.query_string, keep_blank_values=True))
 
 
-def params_url(url, params):
-    if params:
-        url_modifier = UrlModifier(url)
-        url_modifier.add_parameters(**params)
-        url = url_modifier.url
-    return url
+def unquote(url):
+    url_unquoted = _unquote(byte_string(url))
+    return force_unicode(url_unquoted) if isinstance(url, unicode) else url_unquoted
+
+
+def _unquote(url):
+    unquoted_url = urllib2.unquote(url.strip())
+    while unquoted_url != url:
+        url = unquoted_url
+        unquoted_url = urllib2.unquote(url)
+    return unquoted_url
+
+
+# RFC 3986 (Generic Syntax)
+_reserved = ';/?:@&=+$|,#'
+# RFC 3986 sec 2.3
+_unreserved_marks = "-_.!~*'()"
+_safe_chars = urllib.always_safe + '%' + _reserved + _unreserved_marks
+
+
+def quote(url):
+    quoted = urllib.quote(byte_string(url),  _safe_chars)
+    return force_unicode(quoted) if isinstance(url, unicode) else quoted
+
+
+def join_url(url, path):
+    return urljoin(url, unquote(path))
+
+
+def is_base_url(url):
+    url = UrlParse(url)
+    return (not url.path or url.path == '/') and not bool(url.query_string)
+
+
+def get_parameter_value(url, parameter):
+    url = UrlParse(url)
+
+    return url.query[parameter]

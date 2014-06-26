@@ -1,6 +1,6 @@
 from urlo import quote, InternationalizedUrl
 from urlo.unquoted import InternationalizedUrlBuilder, InternationalizedUrlModifier
-from urlo.url import is_base_url
+from urlo.parser import is_base_url
 
 
 def _url_parsing_test():
