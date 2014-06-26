@@ -1,5 +1,4 @@
-from urlo import Url
-from urlo.url import UrlModifier
+from urlo import Url, UrlModifier
 
 
 class UrlSubClass(Url):

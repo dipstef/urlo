@@ -1,5 +1,4 @@
-from urlo import Url, quote, InternationalizedUrl
-from urlo.url import UrlBuilder, UrlModifier
+from urlo import Url, quote, InternationalizedUrl, UrlBuilder, UrlModifier
 from urlo.parser import is_base_url
 
 

@@ -112,7 +112,7 @@ Building
 
 .. code-block:: python
 
-    from urlo.url import build_url, UrlBuilder
+    from urlo import build_url, UrlBuilder
 
     >>> build_url(scheme='foo', host='bar.com', path='test')
     'foo://bar.com/test'
@@ -133,7 +133,7 @@ Mutable urls:
 
 .. code-block:: python
 
-    from urlo.url import UrlModifier
+    from urlo import UrlModifier
 
     >>> url = UrlModifier('http://www.google.com/query?s=foo')
     url.host = 'göögle.com'
@@ -153,6 +153,8 @@ Mutable urls:
 As well internationalized urls
 
 .. code-block:: python
+
+    from urlo.unquoted import InternationalizedUrlModifier
 
     >>> url = InternationalizedUrlModifier'http://www.google.com/query?s=foo')
 

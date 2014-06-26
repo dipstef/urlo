@@ -1,6 +1,8 @@
 from unicoder import force_unicode
-from . import unquote, quote, Unquoted, Quoted
+from . import UnquotedUrl
 from .query import UrlQuery
+from .parser import Quoted
+from .url import quote, unquote
 
 
 class Url(unicode, Quoted):
@@ -12,7 +14,7 @@ class Url(unicode, Quoted):
         return InternationalizedUrl(unquote(self))
 
 
-class InternationalizedUrl(unicode, Unquoted):
+class InternationalizedUrl(unicode, UnquotedUrl):
 
     def __new__(cls, value, encoding='utf-8'):
         return super(InternationalizedUrl, cls).__new__(cls, force_unicode(value.strip(), encoding))
@@ -23,7 +25,3 @@ class InternationalizedUrl(unicode, Unquoted):
 
 def unquoted(url):
     return force_unicode(unquote(url))
-
-
-def parse_query(query_string):
-    return UrlQuery()

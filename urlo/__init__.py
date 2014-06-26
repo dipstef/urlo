@@ -1,8 +1,10 @@
-from funlib.cached import cached, cached_property
+from funlib.cached import cached
 
 from .domain import get_domain, get_domain_suffix, parse_domain
-from .parser import UrlParse, quote, unquote, QuotedParse, join_url
+from .parser import UrlParse, QuotedParse
 from .query import QueryParams
+from .url import quote, unquote, join_url
+from .parser import UriBuilder, UriModifier, UrlMixin, Quoted
 
 
 class StringOrUnicode(object):
@@ -36,30 +38,7 @@ class StringOrUnicode(object):
         return cls if StringOrUnicode in bases else bases[0]._original_class()
 
 
-class UrlMixin(object):
-
-    @cached_property
-    def parsed(self):
-        return UrlParse(self)
-
-    def __getattr__(self, item):
-        return getattr(self.parsed, item)
-
-    def __setattr__(self, name, value):
-        if not name.startswith('_') and hasattr(self.parsed, name):
-            setattr(self.parsed, name, value)
-        else:
-            super(UrlMixin, self).__setattr__(name, value)
-
-    def join_to(self, other):
-        return self.__class__(join_url(self, other))
-
-
-class Quoted(UrlMixin):
-
-    @cached_property
-    def parsed(self):
-        return QuotedParse(self)
+class QuotedUrl(Quoted):
 
     @cached
     def quoted(self):
@@ -70,13 +49,13 @@ class Quoted(UrlMixin):
         return InternationalizedUrl(unquote(self))
 
 
-class Url(StringOrUnicode, Quoted):
+class Url(StringOrUnicode, QuotedUrl):
 
     def __new__(cls, value, *more):
         return super(Url, cls).__new__(cls, quote(value.strip()), *more)
 
 
-class Unquoted(UrlMixin):
+class UnquotedUrl(UrlMixin):
 
     @cached
     def quoted(self):
@@ -87,7 +66,49 @@ class Unquoted(UrlMixin):
         return self.__class__(unquote(self))
 
 
-class InternationalizedUrl(StringOrUnicode, Unquoted):
+class InternationalizedUrl(StringOrUnicode, UnquotedUrl):
 
     def __new__(cls, value, *more):
         return super(InternationalizedUrl, cls).__new__(cls, value.strip(), *more)
+
+
+class UrlBuilder(UriBuilder):
+
+    def __init__(self, host, path='/', port=80, params=None, scheme='http', url_class=Url):
+        super(UrlBuilder, self).__init__(url_class, host, path, port, params, scheme)
+
+    @property
+    def url(self):
+        return self._build()
+
+
+class UrlModifier(UriModifier):
+    _url_class = Url
+
+    def __init__(self, value):
+        super(UrlModifier, self).__init__(self._url_class(value))
+
+    @property
+    def url(self):
+        return self._uri
+
+
+def exclude_parameters(url, *excluded):
+    url_modifier = UrlModifier(url)
+    url_modifier.remove_parameters(*excluded)
+
+    return url_modifier.url
+
+
+def build_url(host, path='', port=80, params=None, scheme='http'):
+    url_build = UrlBuilder(host, path, port, params, scheme)
+
+    return url_build.url
+
+
+def params_url(url, params):
+    if params:
+        url_modifier = UrlModifier(url)
+        url_modifier.add_parameters(**params)
+        url = url_modifier.url
+    return url

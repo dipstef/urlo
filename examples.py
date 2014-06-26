@@ -1,10 +1,9 @@
 # coding=utf-8
 from urlparse import urljoin
 
-from urlo import Url, InternationalizedUrl
-from urlo.query import parse_query, QueryParams
+from urlo import Url, InternationalizedUrl, UrlBuilder, UrlModifier, build_url
+from urlo.query import QueryParams
 from urlo.unquoted import InternationalizedUrlModifier
-from urlo.url import build_url, UrlBuilder, UrlModifier
 
 
 url = Url('http://www.google.com/query?s=foo&bar=1')

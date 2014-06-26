@@ -1,6 +1,6 @@
 import re
 from .unicode import unquoted as unquoted_unicode
-from .parser import urljoin
+from .url import urljoin
 
 
 def join_url(url, path):

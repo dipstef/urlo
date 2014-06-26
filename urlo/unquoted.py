@@ -1,5 +1,5 @@
 from . import InternationalizedUrl
-from .url import UriBuilder, UriModifier
+from .parser import UriBuilder, UriModifier
 
 
 class InternationalizedUrlBuilder(UriBuilder):
