@@ -57,6 +57,12 @@ def main():
     assert url == u'http://test.com/test/foo'
     assert isinstance(url, unicode)
 
+    url = Url(u'http://test.com?s=foo')
+    assert isinstance(url.query['s'], unicode)
+
+    url = Url('http://test.com?s=foo')
+    assert isinstance(url.query['s'], str)
+
 
 if __name__ == '__main__':
     main()

@@ -1,24 +1,25 @@
 from collections import OrderedDict
 import urllib
 from urlparse import parse_qs
-from unicoder import byte_string, decoded
+from unicoder import byte_string, decoded, force_unicode
 
 
 class Query(object):
 
-    def __init__(self, query=None):
+    def __init__(self, query=None, param_type=str):
         query = query or {}
-        params = ((param, _param_value(query[param])) for param in query)
+        self._param_type = byte_string if param_type is str else force_unicode
+        params = ((param, self._param_value(query[param])) for param in query)
         self._params = OrderedDict(params)
 
     @classmethod
     def parse(cls, query_string):
-        return cls(parse_qs(query_string, keep_blank_values=True))
+        return cls(parse_qs(query_string, keep_blank_values=True), param_type=type(query_string))
 
     def __getitem__(self, parameter):
         value = self._params[parameter]
 
-        return _param_value(value)
+        return value[0] if isinstance(value, list) else value
 
     def get(self, parameter, default=None):
         try:
@@ -62,11 +63,11 @@ class Query(object):
     def __len__(self):
         return len(self._params)
 
+    def _param_value(self, value):
+        return self._param_type(value[0] if isinstance(value, list) else value)
 
-class QueryParams(Query):
 
-    def __init__(self, query=None):
-        super(QueryParams, self).__init__(query)
+class QueryUpdate(object):
 
     def add(self, parameter, value):
         value = str(value)
@@ -91,43 +92,43 @@ class QueryParams(Query):
         self._params.update(self.__class__(params))
 
 
-def _param_value(value):
-    return byte_string(value[0] if isinstance(value, list) else value)
+class QueryParams(Query, QueryUpdate):
+    pass
 
 
 class UrlQuery(Query):
-    def __init__(self, query=None):
-        super(UrlQuery, self).__init__(_quote_params(query))
+
+    def __init__(self, query=None, param_type=str):
+        self._param_type = byte_string if param_type is str else force_unicode
+        super(UrlQuery, self).__init__(self._quote_params(query), param_type)
+
+    def _quote_params(self, params):
+        params = dict(params)
+
+        for key, value in params.iteritems():
+            value = self._quote_param(value)
+            params[key] = value
+        return params
+
+    def _quote_param(self, value):
+        value = self._param_value(value)
+        if isinstance(value, list):
+            value = map(urllib.quote, value)
+        else:
+            value = urllib.quote(value)
+        return value
 
 
-def _quote_params(params):
-    params = dict(params)
+class UrlQueryParams(UrlQuery, QueryUpdate):
 
-    for key, value in params.iteritems():
-        value = _quote_param(value)
-        params[key] = value
-    return params
-
-
-def _quote_param(value):
-    value = _param_value(value)
-    if isinstance(value, list):
-        value = map(urllib.quote, value)
-    else:
-        value = urllib.quote(value)
-    return value
-
-
-class UrlQueryParams(QueryParams):
-
-    def __init__(self, query=None):
-        super(UrlQueryParams, self).__init__(_quote_params(query))
+    def __init__(self, query=None, param_type=str):
+        super(UrlQueryParams, self).__init__(query, param_type)
 
     def __setitem__(self, parameter, value):
-        super(UrlQueryParams, self).__setitem__(parameter, _quote_param(value))
+        super(UrlQueryParams, self).__setitem__(parameter, self._quote_param(value))
 
     def update(self, params):
-        super(UrlQueryParams, self).update(_quote_params(params))
+        super(UrlQueryParams, self).update(self._quote_params(params))
 
 
 def parse_query(query_string):
