@@ -86,15 +86,20 @@ Internationalized resource identifier
 Validation
 ==========
 
+.. code-block:: python
+
     >>> Url('http://www.google.com/query?s=foo&bar=1').validate()
     UrlParsed(scheme='http', host='www.google.com', port=80, path='/query', query_string='s=foo&bar=1')
+
     >>> Url('http://long.sub.domain.at.bbc.co.uk').validate()
     UrlParsed(scheme='http', host='long.sub.domain.at.bbc.co.uk', port=80, path='', query_string='')
+
     >>> Url('http://www.google/query?s=foo&bar=1').validate()
     InvalidHost('www.google')
 
     >>> Url('http://127.0.0.1/home').validate()
     UrlParsed(scheme='http', host='127.0.0.1', port=80, path='/home', query_string='')
+
     >>> Url('http://127.0.0./home').validate()
     InvalidHost('127.0.0')
 

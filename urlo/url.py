@@ -9,7 +9,7 @@ from unicoder import force_unicode, byte_string
 from funlib.cached import cached_property
 from .domain import parse_domain
 from .query import Query, UrlQuery
-from urlo.validation import validate, UrlError
+from .validation import validate, UrlError
 
 
 class UrlParsed(namedtuple('UrlParsed', ['scheme', 'host', 'port', 'path', 'query_string'])):
