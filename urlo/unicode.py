@@ -2,7 +2,7 @@ from unicoder import force_unicode
 from . import UnquotedUrl
 from .query import UrlQuery
 from .parser import Quoted
-from .url import quote, unquote
+from .url import quote, unquote, urljoin
 
 
 class Url(unicode, Quoted):
@@ -25,3 +25,7 @@ class InternationalizedUrl(unicode, UnquotedUrl):
 
 def unquoted(url):
     return force_unicode(unquote(url))
+
+
+def join_url(url, path):
+    return urljoin(url, unquoted(path))
