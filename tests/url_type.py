@@ -1,4 +1,5 @@
-from urlo import Url, UrlModifier
+from urlo import Url, UrlModifier, InternationalizedUrl
+from urlo.unquoted import InternationalizedUrlModifier, params_url, build_url
 
 
 class UrlSubClass(Url):
@@ -62,6 +63,25 @@ def main():
     url = Url('http://test.com?s=foo')
     assert isinstance(url.query['s'], str)
 
+    url = Url(Url('http://test.com?s=foo'))
+    assert isinstance(url, Url)
+
+    url = UrlModifier(Url('http://test.com?s=foo'))
+    assert isinstance(url, Url)
+    assert isinstance(url.url, Url)
+
+    url = InternationalizedUrlModifier(InternationalizedUrl('http://test.com?s=foo'))
+    assert isinstance(url, InternationalizedUrl)
+    assert isinstance(url.iri, InternationalizedUrl)
+
+    url = params_url(url, {'a': 1})
+    assert isinstance(url, InternationalizedUrl)
+
+    url = build_url(host='test.com', port=81, path='/foo')
+    assert isinstance(url, InternationalizedUrl)
+
+    url = params_url(url, {'a': 1})
+    assert isinstance(url, InternationalizedUrl)
 
 if __name__ == '__main__':
     main()

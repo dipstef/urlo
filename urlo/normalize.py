@@ -1,5 +1,5 @@
 import re
-from .unicode import unquoted as unquoted_unicode
+from .unicoded import unquoted as unquoted_unicode
 from .url import urljoin
 
 

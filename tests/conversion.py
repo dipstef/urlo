@@ -1,14 +1,11 @@
 # coding=utf-8
-from urlo.unicode import Url
+from urlo.unicoded import Url
 
 
 class Unicode(unicode):
 
     def __str__(self):
         return self.encode('utf-8')
-
-    #def __eq__(self, y):
-    #    return super(Unicode, self).__eq__(y) if not isinstance(y, str) else str(self) == y
 
 
 url = u'http://test.com/löl/aåd/🍺'
