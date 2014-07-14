@@ -1,6 +1,6 @@
 import urllib
 import urllib2
-from urlparse import urlsplit, urlunsplit
+from urlparse import urlsplit, urlunsplit, urljoin as basejoin
 
 from unicoder import byte_string, force_unicode
 
@@ -33,7 +33,14 @@ def join_url(url, path):
     return urljoin(url, unquote(path))
 
 
-def urljoin(*parts):
+def urljoin(part1, part2, *parts):
+    url = basejoin(part1, part2)
+    for part in parts:
+        url = basejoin(url, part)
+    return url
+
+
+def _urljoin(*parts):
     """Normalize url parts and join them with a slash."""
     schemes, netlocs, paths, queries, fragments = zip(*(urlsplit(part) for part in parts))
     scheme, netloc, query, fragment = _first_of_each(schemes, netlocs, queries, fragments)

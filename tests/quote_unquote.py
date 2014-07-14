@@ -8,10 +8,10 @@ from unicoder import decoded
 from urlo import unquote, quote
 
 
-url = u'http://test.com/link%C3%B6pings/tr%C3%A5d/%F0%9F%8D%BA'
+url = u'http://test.com/l%C3%B6l/r%C3%A5a/%F0%9F%8D%BA'
 url_utf8 = url.encode('utf-8')
 
-unquoted = u'http://test.com/linköpings/tråd/🍺'
+unquoted = u'http://test.com/löl/råa/🍺'
 
 assert quote(url) == url
 assert quote(url_utf8) == url_utf8
@@ -41,4 +41,4 @@ assert isinstance(django_quoted, unicode)
 
 assert django_unquoted == url_unquoted == unquoted
 
-assert iri_to_uri(u'http://test.com/linköpings/tråd/🍺') == url
+assert iri_to_uri(u'http://test.com/löl/råa/🍺') == url

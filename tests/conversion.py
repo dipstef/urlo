@@ -11,7 +11,7 @@ class Unicode(unicode):
     #    return super(Unicode, self).__eq__(y) if not isinstance(y, str) else str(self) == y
 
 
-url = u'http://test.com/linköpings/tråd/🍺'
+url = u'http://test.com/löl/aåd/🍺'
 
 url_unicode = Unicode(u'%s' % url)
 url_str = url_unicode.encode('utf-8')
