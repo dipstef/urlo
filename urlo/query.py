@@ -64,7 +64,12 @@ class Query(object):
         return len(self._params)
 
     def _param_value(self, value):
-        return self._param_type(value[0] if isinstance(value, list) else value)
+        if isinstance(value, list):
+            if len(value) > 1:
+                return map(self._param_type, value)
+            else:
+                value = value[0]
+        return self._param_type(value)
 
 
 class QueryUpdate(object):
