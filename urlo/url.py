@@ -1,5 +1,4 @@
 import urllib
-import urllib2
 from urlparse import urlsplit, urlunsplit, urljoin as basejoin
 
 from unicoder import byte_string, force_unicode
@@ -11,10 +10,10 @@ def unquote(url):
 
 
 def _unquote(url):
-    unquoted_url = urllib2.unquote(url.strip())
+    unquoted_url = urllib.unquote_plus(url.strip())
     while unquoted_url != url:
         url = unquoted_url
-        unquoted_url = urllib2.unquote(url)
+        unquoted_url = urllib.unquote_plus(url)
     return unquoted_url
 
 # RFC 3986 (Generic Syntax)
@@ -25,7 +24,7 @@ _safe_chars = urllib.always_safe + '%' + _reserved + _unreserved_marks
 
 
 def quote(url):
-    quoted = urllib.quote(byte_string(url),  _safe_chars)
+    quoted = urllib.quote_plus(byte_string(url),  _safe_chars)
     return force_unicode(quoted) if isinstance(url, unicode) else quoted
 
 

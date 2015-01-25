@@ -58,7 +58,12 @@ class UrlParsed(namedtuple('UrlParsed', ['scheme', 'host', 'port', 'path', 'quer
 
     @cached_property
     def server(self):
-        return '{host}{port}'.format(host=self.host, port=':%d' % self.port if self.port != 80 else '')
+        return self._type('{host}{port}').format(host=self.host, port=':%d' % self.port if self.port != 80 else '')
+
+    @property
+    def _type(self):
+        unicode_url = any(isinstance(value, unicode) for value in [self.host, self.path, self.query_string])
+        return unicode if unicode_url else str
 
 
 class UrlFragment(namedtuple('UrlParsed', ['scheme', 'host', 'port', 'path', 'query_string', 'fragment']), UrlParsed):
@@ -131,7 +136,7 @@ class UriBuilder(object):
         self.port = port
         self.scheme = scheme
         self._uri_class = uri_class
-        self.query = self._get_query_class()(params or {})
+        self.query = self._get_query_class()(params or {}, param_type=uri_class)
 
     def _get_query_class(self):
         return UrlQueryParams if issubclass(self._uri_class, Quoted) else QueryParams
@@ -140,16 +145,20 @@ class UriBuilder(object):
         query_string = self._get_query_string()
         parsed = UrlParsed(self.scheme, self.host, self.port, self.path, query_string)
 
-        url = '{scheme}://{server}'.format(scheme=parsed.scheme, server=parsed.server)
+        url = self._url_type('{scheme}://{server}')
+        url = url.format(scheme=parsed.scheme, server=parsed.server)
         url = join_url(url, parsed.path)
         url += parsed.query_string and '?' + parsed.query_string
 
         return self._uri_class(url)
 
-    def _get_query_string(self):
+    @property
+    def _url_type(self):
         url_class = unicode if isinstance(self.host, unicode) or isinstance(self.path, unicode) else str
+        return url_class
 
-        query_string = url_class(self.query)
+    def _get_query_string(self):
+        query_string = self._url_type(self.query)
 
         if issubclass(self._uri_class, Quoted):
             query_string = quote(query_string)
@@ -201,11 +210,12 @@ class UriModifier(UriBuilder):
 
     def _get_query_class(self):
         query_class = super(UriModifier, self)._get_query_class()
+        uri_class = self._uri_class
 
         class QueryModifier(query_class):
 
-            def __init__(self, params):
-                super(QueryModifier, self).__init__(params)
+            def __init__(self, params, param_type=None):
+                super(QueryModifier, self).__init__(params, param_type=param_type or uri_class)
 
             update = self._modifier(query_class.update)
             add = self._modifier(query_class.add)

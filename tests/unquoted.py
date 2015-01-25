@@ -122,7 +122,7 @@ def _url_quoting_test():
 
     quoted = quote(quote(quote(url)))
 
-    assert 'http://test.com/test?foo=123%20456' == quoted
+    assert 'http://test.com/test?foo=123+456' == quoted
     url = InternationalizedUrl(quoted)
     assert 'http://test.com/test?foo=123 456' == url.unquoted()
 

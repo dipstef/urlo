@@ -83,7 +83,7 @@ def _url_builder_test():
     assert url_build.url == 'http://test.com/test?foo=123&foo=456'
 
     url = Url('http://test.com/test?foo=123 456')
-    assert url.query['foo'] == '123%20456'
+    assert url.query['foo'] == '123+456'
 
 
 def _url_modification_test():
@@ -104,27 +104,27 @@ def _url_modification_test():
     assert url.url == url
 
     url.query.add('bar', '457 789')
-    assert 'http://192.168.1.1:81/test?foo=123&bar=456&bar=457%20789' == url
+    assert 'http://192.168.1.1:81/test?foo=123&bar=456&bar=457+789' == url
     assert url.query['bar'] == '456'
 
     url.host = 'test.com'
-    assert url == 'http://test.com:81/test?foo=123&bar=456&bar=457%20789'
+    assert url == 'http://test.com:81/test?foo=123&bar=456&bar=457+789'
 
     url.query['bau'] = 'asd qwe'
-    assert url == 'http://test.com:81/test?foo=123&bar=456&bar=457%20789&bau=asd%20qwe'
-    assert url.query['bau'] == 'asd%20qwe'
+    assert url == 'http://test.com:81/test?foo=123&bar=456&bar=457+789&bau=asd+qwe'
+    assert url.query['bau'] == 'asd+qwe'
 
     assert isinstance(url, str)
 
 
 def _url_quoting_test():
     url = Url('http://test.com/test?foo=123 456')
-    assert 'http://test.com/test?foo=123%20456' == url
+    assert 'http://test.com/test?foo=123+456' == url
 
-    assert url.query['foo'] == '123%20456'
+    assert url.query['foo'] == '123+456'
 
     quoted = quote(quote(quote('http://test.com/test?foo=123 456')))
-    assert 'http://test.com/test?foo=123%20456' == quoted
+    assert 'http://test.com/test?foo=123+456' == quoted
     url = Url(quoted)
     assert 'http://test.com/test?foo=123 456' == url.unquoted()
 
