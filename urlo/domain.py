@@ -1,14 +1,15 @@
 from collections import namedtuple
 import os
 from tldextract import tldextract
+from unicoder import byte_string, decoded
 
 
 _host_extract = tldextract.TLDExtract(cache_file=os.path.join(os.path.dirname(__file__), 'hosts.txt'))
 
 
 def get_domain(url):
-    ext = _host_extract(url.strip())
-    return _domain(ext)
+    ext = _host_extract(byte_string(url.strip()))
+    return _to_original_str(url, _domain(ext))
 
 
 def _domain(ext):
@@ -20,12 +21,12 @@ def _domain(ext):
 def get_domain_suffix(url):
     ext = _host_extract(url)
     if ext.suffix:
-        return ext.suffix
+        return _to_original_str(url, ext.suffix)
 
 
 def get_sub_domain(url):
     ext = _host_extract(url.strip())
-    return _sub_domain(ext)
+    return _to_original_str(url, _sub_domain(ext))
 
 
 def _sub_domain(ext):
@@ -36,7 +37,7 @@ def _sub_domain(ext):
 
 def get_sub_domain_name(url):
     ext = _host_extract(url.strip())
-    return _sub_domain_name(ext)
+    return _to_original_str(url, _sub_domain_name(ext))
 
 
 def _sub_domain_name(ext):
@@ -46,6 +47,10 @@ def _sub_domain_name(ext):
 def parse_domain(url):
     ext = _host_extract(url.strip())
     return DomainInfo(_sub_domain_name(ext), _domain(ext), ext.suffix)
+
+
+def _to_original_str(url, value):
+    return decoded(value) if value and isinstance(url, unicode) else value
 
 
 class DomainInfo(namedtuple('DomainInfo', ['sub_domain_name', 'domain', 'suffix'])):
