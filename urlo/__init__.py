@@ -51,8 +51,10 @@ class QuotedUrl(Quoted):
 
 class Url(StringOrUnicode, QuotedUrl):
 
-    def __new__(cls, value, *more):
-        return super(Url, cls).__new__(cls, quote(value.strip()), *more)
+    def __new__(cls, value, with_fragments=True, *more):
+        instance = super(Url, cls).__new__(cls, quote(value.strip()), *more)
+        instance._with_fragments = with_fragments
+        return instance
 
 
 class UnquotedUrl(UrlMixin):
@@ -68,8 +70,10 @@ class UnquotedUrl(UrlMixin):
 
 class InternationalizedUrl(StringOrUnicode, UnquotedUrl):
 
-    def __new__(cls, value, *more):
-        return super(InternationalizedUrl, cls).__new__(cls, value.strip(), *more)
+    def __new__(cls, value, with_fragments=True, *more):
+        instance = super(InternationalizedUrl, cls).__new__(cls, value.strip(), *more)
+        instance._with_fragments = with_fragments
+        return instance
 
 
 class UrlBuilder(UriBuilder):
@@ -85,16 +89,16 @@ class UrlBuilder(UriBuilder):
 class UrlModifier(UriModifier):
     _url_class = Url
 
-    def __init__(self, value):
-        super(UrlModifier, self).__init__(self._url_class(value))
+    def __init__(self, value, with_fragments=True):
+        super(UrlModifier, self).__init__(self._url_class(value, with_fragments=with_fragments))
 
     @property
     def url(self):
         return self._uri
 
 
-def exclude_parameters(url, *excluded):
-    url_modifier = UrlModifier(url)
+def exclude_parameters(url, with_fragments=True, *excluded):
+    url_modifier = UrlModifier(url, with_fragments=with_fragments)
     url_modifier.remove_parameters(*excluded)
 
     return url_modifier.url

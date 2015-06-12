@@ -12,8 +12,8 @@ class InternationalizedUrlBuilder(UriBuilder):
 
 
 class InternationalizedUrlModifier(UriModifier):
-    def __init__(self, value):
-        super(InternationalizedUrlModifier, self).__init__(InternationalizedUrl(value))
+    def __init__(self, value, with_fragments=True):
+        super(InternationalizedUrlModifier, self).__init__(InternationalizedUrl(value, with_fragments=with_fragments))
 
     @property
     def iri(self):
@@ -21,7 +21,7 @@ class InternationalizedUrlModifier(UriModifier):
 
 
 def exclude_parameters(url, *excluded):
-    iri_modifier = InternationalizedUrlModifier(url)
+    iri_modifier = InternationalizedUrlModifier(url, with_fragments=True)
     iri_modifier.remove_parameters(*excluded)
 
     return iri_modifier.iri

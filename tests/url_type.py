@@ -7,6 +7,7 @@ class UrlSubClass(Url):
     def foo(self):
         return 'foo'
 
+
 foo = UrlSubClass
 
 
@@ -82,6 +83,7 @@ def main():
 
     url = params_url(url, {'a': 1})
     assert isinstance(url, InternationalizedUrl)
+
 
 if __name__ == '__main__':
     main()
